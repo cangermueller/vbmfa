@@ -6,93 +6,121 @@
 \usetikzlibrary{positioning}
 
 \author{Angermueller Christof}
-\date{10 January 2014}
-\title{Bayesian variational inference for a mixture of factor analyzer}
+\date{20 January 2014}
+\title{Variational Inference for Bayesian Mixture of Factor Analysers}
 
 \begin{document}
 \maketitle
 
 \newcommand{\bs}{\boldsymbol}
 \newcommand{\Xy}{\bs{y}^{n,g}}
-\newcommand{\Xx}{\bs{x}^n}
-\newcommand{\Xz}{\bs{z}^n}
-\newcommand{\XR}{\mathbb{R}}
+\newcommand{\Xx}{\bs{x}^{n,g}}
+\newcommand{\Xz}{\bs{z}^{n,g}}
+\newcommand{\Xp}{\bs{\pi}}
+\newcommand{\Xl}{\Lambda^s}
+\newcommand{\Xn}{\bs{\nu}^s}
+\newcommand{\Xe}{\Psi}
+\newcommand{\Xa}{\alpha}
+\newcommand{\Xc}{\Xl{\Xl}^T}
 
 \section{Model}
 \subsection{Notations}
 \begin{table}[h]
   \begin{center}
   \begin{tabular}{ll}
-    $n=1,...,N$ & Samples \\
-    $g=1,...,G$ & Genes \\
-    $k=1,...,K$ & Factor analyzers \\
-    $D$ & Number of observed variables \\
-    $E$ & Number of latent variables \\
-    $\Xy\in\XR^D$ & Counts sample $n$ gene $g$ \\
-    $\Xx\in\XR^E$ & Factors sample $n$ \\
-    $\Xz\in\{0,1\}^K$ & Indicator factor analyzers sample $n$ \\
-    $\bs{\pi}\in\XR^K$ & Mixture coefficients \\
-    $\Lambda^k\in\XR^{D\times E}$ & Precision matrix factor analyser $k$
+    $P$ & Number of variables \\
+    $Q$ & Number of components \\
+    $S$ & Number of factor analysers \\
+    $N$ & Number of samples \\
+    $G$ & Number of genes \\
   \end{tabular}
+  \caption{Indices}
 \end{center}
 \end{table}
 
+\begin{table}[h]
+  \begin{center}
+  \begin{tabular}{lll}
+    $\Xy$ & $P$ & Counts sample $n$ gene $g$ \\
+    $\Xx$ & $Q$ & Components sample $n$ gene $g$ \\
+    $\Xz$ & $Q$ & Indicators factor analysers sample $n$ gene $g$ \\
+    $\Xp$ & $S$ & Mixture coefficients \\
+    $\Xl$ & $P \times Q$ & Loading matrix factor analyser $s$ \\
+    $\Xn$ & $Q$ & Precisions components factor analyser $s$ \\
+  \end{tabular}
+  \caption{Random vectors}
+\end{center}
+\end{table}
+
+\begin{table}[h]
+  \begin{center}
+  \begin{tabular}{lll}
+    $a$ & $1$ & Shape gamma distribution \\
+    $b$ & $1$ & Rate gamma distribution \\
+    $\Xa$ & $1$ & Dirichlet parameter \\
+    $\Xe$ & $Q \times Q$ & Noise matrix
+  \end{tabular}
+  \caption{Hyperparameters}
+\end{center}
+\end{table}
+
+\newpage
+\subsection{Conditional probability distributions}
 \begin{figure}[h]
   \begin{center}
     \begin{tikzpicture}
       \tikzstyle{sVar}=[circle, draw=black, very thick];
-      \tikzstyle{sPlate}=[rectangle, draw=black, thick, align=flush right];
+      \tikzstyle{sPlate}=[rectangle, dashed, draw=black, thick, align=flush right];
       \tikzstyle{sHyper}=[rectangle, draw=black, thick];
       \tikzstyle{sDep}=[->, thick];
-
-      \node[sPlate, text width=5cm, text height=4cm] (Pn) {$n=1,...,N$};
-      \node[sPlate, text width=2cm, text height=2.5cm, below=.5cm of Pn.north] (Pg) {$g=1,...,G$};
-      \node[sVar, left=.5 of Pg.east, fill=gray!50] (Y) {$\bs{Y}$};
-      \node[sVar, right=.5cm of Pg.east] (Z) {$\bs{Z}$};
-      \node[sVar, below=.2cm of Z] (X) {$\bs{X}$};
-      \node[sVar, right=2.5cm of Pg.east] (Pi) {$\bs{\pi}$};
-      \node[sHyper, left=2.5cm of Pg.west] (Psi) {$\Psi$};
-      \node[sHyper, right=1cm of Pi] (Alpha) {$\bs{\alpha}$};
-      \node[above=.5 of Pn.north] (Dots) {...};
-      \node[sVar, left=1cm of Dots] (Lambda1) {$\Lambda_1$};
-      \node[sVar, right=1cm of Dots] (LambdaK) {$\Lambda_K$};
-      \node[sHyper, above=1cm of Dots] (Wish) {$\mathcal{W},\nu$};
+      \node[sPlate, text width=6cm, text height=4.5cm] (Pn) {$n=1,...,N$};
+      \node[sPlate, text width=5.5cm, text height=3.5cm, below=.5cm of Pn.north] (Pg) {$g=1,...,G$};
+      \node[sVar, below=.75cm of Pg.north, fill=gray!50] (Y) {$\Xy$};
+      \node[sVar, right=1cm of Y] (Z) {$\Xz$};
+      \node[sVar, below=.2cm of Z] (X) {$\Xx$};
+      \node[sVar, right=1.0cm of Z] (Pi) {$\Xp$};
+      \node[sHyper, left=3cm of Y] (Psi) {$\Xe$};
+      \node[sHyper, right=1cm of Pi] (Alpha) {$\Xa$};
+      \node[above=.5 of Pn.north] (LambdaX) {...};
+      \node[sVar, left=1cm of LambdaX] (Lambda1) {$\Lambda^1$};
+      \node[sVar, right=1cm of LambdaX] (LambdaS) {$\Lambda^S$};
+      \node[above=1cm of LambdaX] (NuX) {...};
+      \node[sVar, left=1cm of NuX] (Nu1) {$\bf{\nu}^1$};
+      \node[sVar, right=1cm of NuX] (NuS) {$\bf{\nu}^S$};
+      \node[sHyper, above=.5cm of NuX] (Gamma) {$a,b$};
       \draw[sDep] (Z) -- (Y);
       \draw[sDep] (X) -- (Y);
       \draw[sDep] (Psi) -- (Y);
       \draw[sDep] (Pi) -- (Z);
       \draw[sDep] (Alpha) -- (Pi);
       \draw[sDep] (Lambda1) -- (Y);
-      \draw[sDep] (LambdaK) -- (Y);
-      \draw[sDep] (Wish) -- (Lambda1);
-      \draw[sDep] (Wish) -- (LambdaK);
-
+      \draw[sDep] (LambdaS) -- (Y);
+      \draw[sDep] (Nu1) -- (Lambda1);
+      \draw[sDep] (NuS) -- (LambdaS);
+      \draw[sDep] (Gamma) -- (Nu1);
+      \draw[sDep] (Gamma) -- (NuS);
     \end{tikzpicture}
+    \caption{Graphical model}
   \end{center}
 \end{figure}
 
-\subsection{Factors}
 \begin{align}
-  P(\Xy|x^n,z^n,\Lambda,\Psi)=\prod_k N(\Xy|(\Lambda^k)^{-1} \Xx,\Lambda^k{\Lambda^k}^{-1}+\Psi)
+  P(\Xy|\Xx,\Xz,\Xp,\Lambda)=\sum_{s=1}^S\mathcal{N}(\Xy|\Xl\Xx,\Xc+\Xe)P(z_s^{n,g}|\Xp)
 \end{align}
 \begin{align}
-  P(\Xx)=N(\Xx|0,I_{E})
+  P(\Xx)=N(\Xx|0,I_{Q})
 \end{align}
 \begin{align}
-  P(\Xz|\pi)=Mult(\Xz|\pi)
+  P(\Xz|\Xp)=Mult(\Xz|\Xp)
 \end{align}
 \begin{align}
-  P(\Lambda^k)=\mathcal{W}(\Lambda^k|W, \nu)
+  P(\Xp|\alpha)=Dir(\Xp|\alpha)
 \end{align}
 \begin{align}
-  P(\bs{\pi}|\alpha)=Dir(\bs{\pi}|\bs{\alpha})
+  P(\Lambda^k)=\prod_{q=1}^Q N({\Xl}_{:q}|0,I_P\frac{1}{\nu_q^{s}})
 \end{align}
-
-\subsection{Evidence}
 \begin{align}
-  \prod_{n,g}P(\Xy)&=\int_{\bs{\theta}}P(\bs{\theta})\prod_{n,g}P(\Xy|\bs{\theta}) \\
-                   &=\int_{\bs{\pi}}Dir(\bs{\pi}|\bs{\alpha})\int_\Lambda\prod_k\mathcal{W}(\Lambda^k|W,\nu) \\
-                   &\quad\prod_n\left[\sum_k P(z_k^n|\bs{\pi})\int_{\Xx}N(\Xy|(\Lambda^k)^{-1} \Xx,\Lambda^k{\Lambda^k}^{-1}+\Psi)\right]
+  P(\Xn)=\prod_{q=1}^Q\Gamma(\nu_q^s|a,b)
 \end{align}
 
 
