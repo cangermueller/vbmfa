@@ -4,6 +4,7 @@
 \usepackage{amssymb}
 \usepackage{tikz}
 \usetikzlibrary{positioning}
+\usepackage{booktabs}
 
 \author{Angermueller Christof}
 \date{20 January 2014}
@@ -23,49 +24,83 @@
 \newcommand{\Xa}{\alpha}
 \newcommand{\Xc}{\Xl{\Xl}^T}
 
-\section{Model}
-\subsection{Notations}
+\section{Notations}
 \begin{table}[h]
   \begin{center}
   \begin{tabular}{ll}
-    $P$ & Number of variables \\
-    $Q$ & Number of components \\
+    \toprule
+    Symbol & Description \\ \hline
+    $P$ & Dimensionality data \\
+    $Q$ & Number of factors/components \\
     $S$ & Number of factor analysers \\
     $N$ & Number of samples \\
     $G$ & Number of genes \\
+    \bottomrule
   \end{tabular}
-  \caption{Indices}
-\end{center}
+  \end{center}
 \end{table}
 
+\section{Factor analysis}
 \begin{table}[h]
   \begin{center}
   \begin{tabular}{lll}
+    \toprule
+    Symbol & Dimension & Description \\ \hline
+    $\bs{y}$ & $P$ & Observed data vector \\
+    $\bs{x}$ & $Q$ & Latent factors \\
+    $\bs{\eta}$ & $P$ & Random Gaussian noise \\
+    $\Lambda$ & $P \times Q$ & Factor loading matrix \\
+    $\Lambda_{:q}$ & $P$ & Column loading matrix/principal component \\
+    $\bs{z}$ & $Q$ & Indicators factor analysers \\
+    $\Xp$ & $S$ & Mixing proportions \\
+    \bottomrule
+  \end{tabular}
+\end{center}
+\end{table}
+\begin{align}
+  P(\bs{x})=\mathcal{N}(\bs{x}|0,I_Q)
+\end{align}
+\begin{align}
+  P(\bs{\eta})=\mathcal{N}(\bs{\eta}|0,\Psi)
+\end{align}
+
+\subsection{Single factor analyser}
+\begin{align}
+  \bs{y}=\Lambda\bs{x}+\bs{\eta}
+\end{align}
+\begin{align}
+  P(\bs{y}|\bs{x},\Lambda,\Psi)=\mathcal{N}(\bs{y}|\Lambda\bs{x},\Lambda\Lambda^T+\Psi)
+\end{align}
+
+\subsection{Mixture factor analysers}
+\begin{align}
+  \bs{y}=\bs{\eta}+\sum_{s=1}^S\Lambda^s\bs{x} P(z_s|\bs{\pi})
+\end{align}
+\begin{align}
+  P(\bs{y}|\bs{x},\Lambda,\Psi)=\sum_{s=1}^S\mathcal{N}(\bs{y}|\Lambda\bs{x},\Lambda^s{\Lambda^s}^T+\Psi)P(z_s|\bs{\pi})
+\end{align}
+
+\newpage
+\section{Gene expression model}
+\begin{table}[h]
+  \begin{center}
+  \begin{tabular}{lll}
+    \toprule
+    Symbol & Dimension & Description \\ \hline
     $\Xy$ & $P$ & Counts sample $n$ gene $g$ \\
-    $\Xx$ & $Q$ & Components sample $n$ gene $g$ \\
+    $\Xx$ & $Q$ & Factors sample $n$ gene $g$ \\
     $\Xz$ & $Q$ & Indicators factor analysers sample $n$ gene $g$ \\
-    $\Xp$ & $S$ & Mixture coefficients \\
+    $\Xp$ & $S$ & Mixing proportions \\
     $\Xl$ & $P \times Q$ & Loading matrix factor analyser $s$ \\
-    $\Xn$ & $Q$ & Precisions components factor analyser $s$ \\
-  \end{tabular}
-  \caption{Random vectors}
-\end{center}
-\end{table}
-
-\begin{table}[h]
-  \begin{center}
-  \begin{tabular}{lll}
+    $\Xn$ & $Q$ & Precisions components factor analyser $s$ \\ \hline
     $a$ & $1$ & Shape gamma distribution \\
     $b$ & $1$ & Rate gamma distribution \\
     $\Xa$ & $1$ & Dirichlet parameter \\
-    $\Xe$ & $Q \times Q$ & Noise matrix
+    $\Xe$ & $Q \times Q$ & Noise matrix \\
+    \bottomrule
   \end{tabular}
-  \caption{Hyperparameters}
 \end{center}
 \end{table}
-
-\newpage
-\subsection{Conditional probability distributions}
 \begin{figure}[h]
   \begin{center}
     \begin{tikzpicture}
@@ -104,6 +139,7 @@
   \end{center}
 \end{figure}
 
+\subsection{Conditional probability distributions}
 \begin{align}
   P(\Xy|\Xx,\Xz,\Xp,\Lambda)=\sum_{s=1}^S\mathcal{N}(\Xy|\Xl\Xx,\Xc+\Xe)P(z_s^{n,g}|\Xp)
 \end{align}
@@ -117,7 +153,7 @@
   P(\Xp|\alpha)=Dir(\Xp|\alpha)
 \end{align}
 \begin{align}
-  P(\Lambda^k)=\prod_{q=1}^Q N({\Xl}_{:q}|0,I_P\frac{1}{\nu_q^{s}})
+  P(\Xl)=\prod_{q=1}^Q N({\Xl}_{:q}|0,I_P\frac{1}{\nu_q^{s}})
 \end{align}
 \begin{align}
   P(\Xn)=\prod_{q=1}^Q\Gamma(\nu_q^s|a,b)
