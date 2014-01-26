@@ -69,7 +69,7 @@
   \bs{y}=\Lambda\bs{x}+\bs{\eta}
 \end{align}
 \begin{align}
-  P(\bs{y}|\bs{x},\Lambda,\Psi)=\mathcal{N}(\bs{y}|\Lambda\bs{x},\Lambda\Lambda^T+\Psi)
+  P(\bs{y}|\bs{x},\Lambda,\Psi)=\mathcal{N}(\bs{y}|\Lambda\bs{x},\Psi)
 \end{align}
 
 \subsection{Mixture factor analysers}
@@ -77,7 +77,7 @@
   \bs{y}=\bs{\eta}+\sum_{s=1}^S\Lambda^s\bs{x} P(z_s|\bs{\pi})
 \end{align}
 \begin{align}
-  P(\bs{y}|\bs{x},\Lambda,\Psi)=\sum_{s=1}^S\mathcal{N}(\bs{y}|\Lambda\bs{x},\Lambda^s{\Lambda^s}^T+\Psi)P(z_s|\bs{\pi})
+  P(\bs{y}|\bs{x},\Lambda,\Psi)=\sum_{s=1}^S\mathcal{N}(\bs{y}|\Lambda\bs{x},\Psi)P(z_s|\bs{\pi})
 \end{align}
 
 \newpage
@@ -141,7 +141,7 @@
 
 \subsection{Conditional probability distributions}
 \begin{align}
-  P(\Xy|\Xx,\Xz,\Xp,\Lambda)=\sum_{s=1}^S\mathcal{N}(\Xy|\Xl\Xx,\Xc+\Xe)P(z_s^{n,g}|\Xp)
+  P(\Xy|\Xx,\Xz,\Xp,\Lambda)=\mathcal{N}(\Xy|\Xl\Xx,\Xe)
 \end{align}
 \begin{align}
   P(\Xx)=N(\Xx|0,I_{Q})
