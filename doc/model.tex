@@ -5,9 +5,10 @@
 \usepackage{tikz}
 \usetikzlibrary{positioning}
 \usepackage{booktabs}
+\usepackage{verbatim}
 
 \author{Angermueller Christof}
-\date{20 January 2014}
+\date{\today}
 \title{Variational Inference for Bayesian Mixture of Factor Analysers}
 
 \begin{document}
@@ -19,10 +20,13 @@
 \newcommand{\Xz}{\bs{z}^{n,g}}
 \newcommand{\Xp}{\bs{\pi}}
 \newcommand{\Xl}{\Lambda^s}
+\newcommand{\Xu}{\bs{\mu}^s}
+\newcommand{\Xus}{\bs{\mu}^*}
+\newcommand{\Xun}{\bs{\nu}^*}
 \newcommand{\Xn}{\bs{\nu}^s}
 \newcommand{\Xe}{\Psi}
-\newcommand{\Xa}{\alpha}
 \newcommand{\Xc}{\Xl{\Xl}^T}
+\newcommand{\Xdiag}{\operatorname{diag}}
 
 \section{Notations}
 \begin{table}[h]
@@ -40,6 +44,7 @@
   \end{center}
 \end{table}
 
+\begin{comment}
 \section{Factor analysis}
 \begin{table}[h]
   \begin{center}
@@ -51,6 +56,7 @@
     $\bs{\eta}$ & $P$ & Random Gaussian noise \\
     $\Lambda$ & $P \times Q$ & Factor loading matrix \\
     $\Lambda_{:q}$ & $P$ & Column loading matrix/principal component \\
+    $\bs{\mu}$ & $P$ & Mean $\bs{y}$ \\
     $\bs{z}$ & $Q$ & Indicators factor analysers \\
     $\Xp$ & $S$ & Mixing proportions \\
     \bottomrule
@@ -66,22 +72,23 @@
 
 \subsection{Single factor analyser}
 \begin{align}
-  \bs{y}=\Lambda\bs{x}+\bs{\eta}
+  \bs{y}=\Lambda\bs{x}+\bs{\mu}+\bs{\eta}
 \end{align}
 \begin{align}
-  P(\bs{y}|\bs{x},\Lambda,\Psi)=\mathcal{N}(\bs{y}|\Lambda\bs{x},\Psi)
+  P(\bs{y}|\bs{x},\Lambda,\bs{\mu},\bs{\eta})=\mathcal{N}(\bs{y}|\Lambda\bs{x}+\bs{\mu},\Psi)
 \end{align}
 
 \subsection{Mixture factor analysers}
 \begin{align}
-  \bs{y}=\bs{\eta}+\sum_{s=1}^S\Lambda^s\bs{x} P(z_s|\bs{\pi})
+  \bs{y}=\bs{\eta}+\sum_{s=1}^S(\Lambda^s\bs{x}+\bs{\mu}) P(z_s|\bs{\pi})
 \end{align}
 \begin{align}
-  P(\bs{y}|\bs{x},\Lambda,\Psi)=\sum_{s=1}^S\mathcal{N}(\bs{y}|\Lambda\bs{x},\Psi)P(z_s|\bs{\pi})
+  P(\bs{y}|\bs{x},\Lambda,\bs{\mu},\bs{\eta})=\sum_{s=1}^S\mathcal{N}(\bs{y}|\Lambda\bs{x}+\bs{\mu},\Psi)P(z_s|\bs{\pi})
 \end{align}
 
 \newpage
-\section{Gene expression model}
+\end{comment}
+
 \begin{table}[h]
   \begin{center}
   \begin{tabular}{lll}
@@ -92,11 +99,15 @@
     $\Xz$ & $Q$ & Indicators factor analysers sample $n$ gene $g$ \\
     $\Xp$ & $S$ & Mixing proportions \\
     $\Xl$ & $P \times Q$ & Loading matrix factor analyser $s$ \\
+    $\Xu$ & $P$ & Offset factor analyser $s$ \\
     $\Xn$ & $Q$ & Precisions components factor analyser $s$ \\ \hline
-    $a$ & $1$ & Shape gamma distribution \\
-    $b$ & $1$ & Rate gamma distribution \\
-    $\Xa$ & $1$ & Dirichlet parameter \\
-    $\Xe$ & $Q \times Q$ & Noise matrix \\
+    $a^*$ & $1$ & Shape gamma distribution \\
+    $b^*$ & $1$ & Rate gamma distribution \\
+    $\alpha^*$ & $1$ & Strength Dirichlet prior \\
+    $\bs{m}^*$ & $S$ & Prior mixing proportions \\
+    $\Xus$ & $P$ & Offset mean \\
+    $\Xun$ & $P$ & Offset precision \\
+    $\Xe$ & $P \times P$ & Noise matrix \\
     \bottomrule
   \end{tabular}
 \end{center}
@@ -104,44 +115,43 @@
 \begin{figure}[h]
   \begin{center}
     \begin{tikzpicture}
-      \tikzstyle{sVar}=[circle, draw=black, very thick];
+      \tikzstyle{sVar}=[circle, draw=black, very thick, minimum size=.8cm];
       \tikzstyle{sPlate}=[rectangle, dashed, draw=black, thick, align=flush right];
-      \tikzstyle{sHyper}=[rectangle, draw=black, thick];
+      \tikzstyle{sHyper}=[rectangle, draw=black, thick, minimum size=.8cm];
       \tikzstyle{sDep}=[->, thick];
-      \node[sPlate, text width=6cm, text height=4.5cm] (Pn) {$n=1,...,N$};
-      \node[sPlate, text width=5.5cm, text height=3.5cm, below=.5cm of Pn.north] (Pg) {$g=1,...,G$};
-      \node[sVar, below=.75cm of Pg.north, fill=gray!50] (Y) {$\Xy$};
+      \node[sPlate, text width=5cm, text height=4.5cm] (Pn) {$n=1,...,N$};
+      \node[sPlate, text width=4.5cm, text height=3.5cm, below=.5cm of Pn.north] (Pg) {$g=1,...,G$};
+      \node[sVar, below left=.75cm and .5cm of Pg.north, fill=gray!50] (Y) {$\Xy$};
       \node[sVar, right=1cm of Y] (Z) {$\Xz$};
-      \node[sVar, below=.2cm of Z] (X) {$\Xx$};
-      \node[sVar, right=1.0cm of Z] (Pi) {$\Xp$};
-      \node[sHyper, left=3cm of Y] (Psi) {$\Xe$};
-      \node[sHyper, right=1cm of Pi] (Alpha) {$\Xa$};
-      \node[above=.5 of Pn.north] (LambdaX) {...};
-      \node[sVar, left=1cm of LambdaX] (Lambda1) {$\Lambda^1$};
-      \node[sVar, right=1cm of LambdaX] (LambdaS) {$\Lambda^S$};
-      \node[above=1cm of LambdaX] (NuX) {...};
-      \node[sVar, left=1cm of NuX] (Nu1) {$\bf{\nu}^1$};
-      \node[sVar, right=1cm of NuX] (NuS) {$\bf{\nu}^S$};
-      \node[sHyper, above=.5cm of NuX] (Gamma) {$a,b$};
+      \node[sVar, below=.5cm of Z] (X) {$\Xx$};
+      \node[sVar, right=1.5cm of Z] (Pi) {$\Xp$};
+      \node[sHyper, left=2cm of Y] (Psi) {$\Xe$};
+      \node[sHyper, right=1cm of Pi] (Alpha) {$\alpha^*\bs{m}^*$};
+      \node[sPlate, align=flush right, text width=4cm, text depth=2.5cm, above=1.5cm of Y] (Ps) {$s=1,...,S$};
+      \node[above =.75cm of Ps.south] (Sh) {};
+      \node[sVar, left=.5cm of Sh] (L) {$\Lambda$};
+      \node[sVar, above=.5cm of L] (Nu) {$\bs{\nu}$};
+      \node[sVar, right=.5cm of Sh] (Mu) {$\bs{\mu}$};
+      \node[sHyper, right=1cm of Mu] (MuH) {$\bs{\mu}^*,\bs{\nu}^*$};
+      \node[sHyper, left=1cm of Nu] (NuH) {$a^*,b^*$};
       \draw[sDep] (Z) -- (Y);
       \draw[sDep] (X) -- (Y);
       \draw[sDep] (Psi) -- (Y);
       \draw[sDep] (Pi) -- (Z);
       \draw[sDep] (Alpha) -- (Pi);
-      \draw[sDep] (Lambda1) -- (Y);
-      \draw[sDep] (LambdaS) -- (Y);
-      \draw[sDep] (Nu1) -- (Lambda1);
-      \draw[sDep] (NuS) -- (LambdaS);
-      \draw[sDep] (Gamma) -- (Nu1);
-      \draw[sDep] (Gamma) -- (NuS);
+      \draw[sDep] (L) -- (Y);
+      \draw[sDep] (Mu) -- (Y);
+      \draw[sDep] (Nu) -- (L);
+      \draw[sDep] (NuH) -- (Nu);
+      \draw[sDep] (MuH) -- (Mu);
     \end{tikzpicture}
     \caption{Graphical model}
   \end{center}
 \end{figure}
 
-\subsection{Conditional probability distributions}
+\section{Conditional probability distributions}
 \begin{align}
-  P(\Xy|\Xx,\Xz,\Xp,\Lambda)=\mathcal{N}(\Xy|\Xl\Xx,\Xe)
+  P(\Xy|\Xx,\Xz,\Xp,\Lambda,\Xe)=\mathcal{N}(\Xy|\Xl\Xx+\Xu,\Xe)
 \end{align}
 \begin{align}
   P(\Xx)=N(\Xx|0,I_{Q})
@@ -150,13 +160,16 @@
   P(\Xz|\Xp)=Mult(\Xz|\Xp)
 \end{align}
 \begin{align}
-  P(\Xp|\alpha)=Dir(\Xp|\alpha)
+  P(\Xp|\alpha^*\bs{m}^*)=Dir(\Xp|\alpha^*\bs{m}^*)
 \end{align}
 \begin{align}
-  P(\Xl)=\prod_{q=1}^Q N({\Xl}_{:q}|0,I_P\frac{1}{\nu_q^{s}})
+  P(\Xl|\Xn)=\prod_{p=1}^P N(\Xl_p|0,\Xdiag[\Xn])
 \end{align}
 \begin{align}
-  P(\Xn)=\prod_{q=1}^Q\Gamma(\nu_q^s|a,b)
+  P(\Xu|\Xus,\Xun)=N(\Xu|\Xus,\Xdiag[\Xun])
+\end{align}
+\begin{align}
+  P(\Xn|a^*,b^*)=\prod_{q=1}^Q\Gamma(\nu_q^s|a^*,b^*)
 \end{align}
 
 

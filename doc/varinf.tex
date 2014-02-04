@@ -38,11 +38,23 @@
 \newcommand{\Xe}{\Psi}
 \newcommand{\Xa}{\alpha}
 \newcommand{\Xc}{\Xl{\Xl}^T}
+
 \newcommand{\Xl}{\Lambda^s}
-\newcommand{\Xlp}{\overline{\Lambda}^s}
-\newcommand{\Xsp}{\Sigma^{p,s}}
+\newcommand{\Xlv}{\Lambda^{p,s}}
+\newcommand{\Xlvll}{\Xlv_{\Lambda\Lambda}}
+\newcommand{\Xlvlu}{\Xlv_{\Lambda\mu}}
+\newcommand{\Xlvul}{\Xlv_{\mu\Lambda}}
+\newcommand{\Xlvuu}{\Xlv_{\mu\mu}}
+\newcommand{\Xlt}{\tilde{\Lambda}^s}
+\newcommand{\Xltm}{\bar{\tilde{\bs{\Lambda}}}^s}
+\newcommand{\Xltmq}{\bar{\tilde{\Lambda}}^s_q}
+\newcommand{\Xltv}{\tilde{\Gamma}^{p,s}}
+
 \newcommand{\Xx}{\bs{x}^n}
 \newcommand{\Xxm}{\overline{\bs{x}}^{n,s}}
+\newcommand{\Xxv}{\Sigma^s}
+
+\newcommand{\Xsp}{\Sigma^{p,s}}
 \newcommand{\Xxs}{\Sigma^s}
 \newcommand{\Xlm}{\overline{\Lambda}^s}
 \newcommand{\Xls}{\Sigma^{p,s}}
@@ -54,27 +66,66 @@
 \newcommand{\Xtr}{\operatorname{tr}}
 \newcommand{\Xdiag}{\operatorname{diag}}
 
-\section{Update equations}
+\section{Variational approximation}
+The goal is to approximate the following posterior distribution:
 \begin{align}
-  Q(\bs{x},\bs{s},\bs{\pi},\bs{\Lambda},\bs{\nu})=Q(\Xp)\prod_{s,p}Q(\Xl_p)\prod_{s,q}Q(\nu_q^s)\prod_n Q(\Xx|\Xs)Q(\Xs)
+  P(\bs{\pi},\bs{\nu},\Lambda,\bs{\nu},\bs{x},\bs{s}|\bs{y})=Q(\bs{\pi},\bs{\nu},\Lambda,\bs{\nu},\bs{x},\bs{s})
 \end{align}
+The following approximation is assumed:
+\begin{align}
+  Q(\bs{\pi},\bs{\nu},\Lambda,\bs{\nu},\bs{x},\bs{s})=Q(\bs{\pi},\bs{\nu})Q(\Lambda,\bs{\nu})Q(\bs{x},\bs{s})
+\end{align}
+The mean field approximation results in the folling factorization:
+\begin{align}
+  Q(\bs{\pi},\bs{\nu})Q(\Lambda,\bs{\nu})Q(\bs{x},\bs{s})=Q(\bs{\pi})\prod_s\prod_q Q(\nu_q^s)\prod_s\prod_p Q(\tilde{\Lambda}^s_p) \prod_n Q(\Xx|\Xs)Q(\Xs)
+\end{align}
+Here, $\tilde{\Lambda}^s$ is the concatenation of $\Lambda^s$ and $\bs{\mu}^s$:
+\begin{align}
+  \tilde{\Lambda}^s:=[\Lambda^s \: \bs{\mu}^s].
+\end{align}
+\begin{align}
+  Q(\Xp)=\mathcal{D}(\Xp|\alpha\bs{m})
+\end{align}
+\begin{align}
+ Q(\nu^s_q)=\mathcal{G}(\nu^s_q|a_q, b_q^s)
+\end{align}
+\begin{align}
+  Q(\Xlt_p)=\mathcal{N}(\Xlt_p|\Xltm,\Xltv)
+\end{align}
+\begin{align}
+  Q(\Xx|\Xs)=\mathcal{N}(\Xx|\Xxm,\Xxv)
+\end{align}
+\begin{align}
+  Q(\Xs)\text{ is }N\times S
+\end{align}
+
 
 \subsection{$Q(\Xp)$}
 \begin{align}
-  Q(\Xp)\sim\mathcal{D}(\omega\bs{u})
+  Q(\Xp)=\mathcal{D}(\Xp|\alpha\bs{m})
+\end{align}
+\begin{align}
+  \alpha m_s=\alpha^*m^*_s+\sum_n Q(s^n)
+\end{align}
+
+\subsection{$Q(\nu_q^s)$}
+\begin{align}
+ Q(\nu^s_q)=\mathcal{G}(\nu^s_q|a_q, b_q^s)
+\end{align}
+\begin{align}
+a_q&=a+\frac{P}{2} \\
+b_q^s&=b+\frac{1}{2}\sum_p<\Xl_{pq}{}^2> \\
+&=b+\frac{1}{2}\sum_p \Xltmq{}^2 + \Xltv_{qq}
+\end{align}
+Here, we solved $<\Xlt_{pq}{}^2>$ by eq. \ref{eq:x2}.
+
+\subsection{$Q(\Xlt_p)$}
+\begin{align}
+  Q(\Xlt_p)=\mathcal{N}(\Xlt_p|\Xltm,\Xltv)
 \end{align}
 
 \begin{align}
-  \omega u_s=\frac{\alpha}{S}+\sum_n Q(s^n)
-\end{align}
-
-\subsection{$Q(\Xl_p)$}
-\begin{align}
-  Q(\Xl_p)\sim\mathcal{N}(\Xlm_p,\Xls)
-\end{align}
-
-\begin{align}
-  \Xlm=\left[\Xpsii\sum_n Q(s^n)\Xy{\Xxm}^T\Xls\right]
+  %\Xlm=\left[\Xpsii\sum_n Q(s^n)\Xy{\Xxm}^T\Xls\right]
 \end{align}
 
 \begin{align}
@@ -83,6 +134,31 @@
 \end{align}
 Here, we solved $<\Xx {\Xx}^T>$ by eq. \ref{eq:xx}.
  
+
+
+
+
+
+\section{Update equations}
+\begin{align}
+  Q(\bs{x},\bs{s},\bs{\pi},\bs{\Lambda},\bs{\nu})=Q(\Xp)\prod_{s,p}Q(\Xl_p)\prod_{s,q}Q(\nu_q^s)\prod_n Q(\Xx|\Xs)Q(\Xs)
+\end{align}
+
+\subsection{$Q(\Xl_p)$}
+\begin{align}
+  Q(\Xl_p)\sim\mathcal{N}(\Xlm_p,\Xls)
+\end{align}
+
+\begin{align}
+  %\Xlm=\left[\Xpsii\sum_n Q(s^n)\Xy{\Xxm}^T\Xls\right]
+\end{align}
+
+\begin{align}
+  {\Xls}^{-1}&=\Psi^{-1}_{pp}\sum_n Q(s^n)<\Xx {\Xx}^T>+\Xdiag[<\Xn>] \\
+    &=\Psi^{-1}\sum_n Q(s^n)\left(\Xxm{\Xxm}^T+\Xxs\right)+\Xdiag[\frac{a^s_1}{b^s_1},\dots,\frac{a^s_Q}{b^s_Q}]
+\end{align}
+Here, we solved $<\Xx {\Xx}^T>$ by eq. \ref{eq:xx}.
+
 \subsection{$Q(\nu_q^s)$}
 \begin{align}
  Q(\nu_q^s)\sim\mathcal{G}(a_q^s, b_q^s)
@@ -203,5 +279,6 @@ If $\Xvx$ and $\Xvy$ are independent:
   &=\sum_i \Xvar[\Xvx_i \Xvy_i] \\
   &=\sum_i <\Xvx_i^2><\Xvy_i^2> - <\Xvx_i>^2<\Xvy_i>^2 
 \end{align}
+
 
 \end{document}
