@@ -22,10 +22,11 @@
 \usetikzlibrary{positioning}
 \usepackage{booktabs}
 \usepackage{hyperref}
+\usepackage[parfill]{parskip}
 
 
 \author{Angermueller Christof}
-\date{20 January 2014}
+\date{\today}
 \title{Variational Inference for Bayesian Mixture of Factor Analysers}
 
 \begin{document}
@@ -40,19 +41,40 @@
 \newcommand{\Xc}{\Xl{\Xl}^T}
 
 \newcommand{\Xl}{\Lambda^s}
-\newcommand{\Xlv}{\Lambda^{p,s}}
-\newcommand{\Xlvll}{\Xlv_{\Lambda\Lambda}}
-\newcommand{\Xlvlu}{\Xlv_{\Lambda\mu}}
-\newcommand{\Xlvul}{\Xlv_{\mu\Lambda}}
-\newcommand{\Xlvuu}{\Xlv_{\mu\mu}}
+\newcommand{\Xlmp}{\bar{\bs{\Lambda}}^s_p}
+\newcommand{\Xlvp}{\Sigma^{p,s}}
+\newcommand{\Xlvpi}{\Xlvp{}^{-1}}
+\newcommand{\Xlvpll}{\Xlvp_{\Lambda\Lambda}}
+\newcommand{\Xlvplu}{\Xlvp_{\Lambda\mu}}
+\newcommand{\Xlvpul}{\Xlvp_{\mu\Lambda}}
+\newcommand{\Xlvpuu}{\Xlvp_{\mu\mu}}
+\newcommand{\Xlvplli}{\Xlvpll{}^{-1}}
+\newcommand{\Xlvplui}{\Xlvplu{}^{-1}}
+\newcommand{\Xlvpuli}{\Xlvpul{}^{-1}}
+\newcommand{\Xlvpuui}{\Xlvpuu{}^{-1}}
 \newcommand{\Xlt}{\tilde{\Lambda}^s}
-\newcommand{\Xltm}{\bar{\tilde{\bs{\Lambda}}}^s}
-\newcommand{\Xltmq}{\bar{\tilde{\Lambda}}^s_q}
-\newcommand{\Xltv}{\tilde{\Gamma}^{p,s}}
+\newcommand{\Xltb}{\tilde{{\bs{\Lambda}}}^s}
+\newcommand{\Xltp}{\tilde{\bs{\Lambda}}^s_p}
+\newcommand{\Xltpq}{\tilde{\Lambda}^s_{pq}}
+\newcommand{\Xltm}{\bar{\tilde{\Lambda}}^s}
+\newcommand{\Xltmp}{\bar{\tilde{\bs{\Lambda}}}^s_p}
+\newcommand{\Xltmpq}{\bar{\tilde{\Lambda}}^s_{pq}}
+\newcommand{\Xltvp}{\tilde{\Gamma}^{p,s}}
+\newcommand{\Xltvpi}{\Xltvp{}^{-1}}
+
+\newcommand{\Xu}{\bs{\mu}^s}
+\newcommand{\Xup}{\mu^s_p}
+\newcommand{\Xum}{\bar{\bs{\mu}}^s}
+\newcommand{\Xump}{\bar{\mu}^s_p}
 
 \newcommand{\Xx}{\bs{x}^n}
 \newcommand{\Xxm}{\overline{\bs{x}}^{n,s}}
 \newcommand{\Xxv}{\Sigma^s}
+\newcommand{\Xxt}{\tilde{\bs{x}}^n}
+\newcommand{\Xxtq}{\tilde{x}^n_q}
+\newcommand{\Xxtm}{\bar{\tilde{\bs{x}}}^n}
+\newcommand{\Xxtmq}{\bar{\tilde{x}}^n_q}
+\newcommand{\Xxtv}{\tilde{\Sigma}^s}
 
 \newcommand{\Xsp}{\Sigma^{p,s}}
 \newcommand{\Xxs}{\Sigma^s}
@@ -65,32 +87,34 @@
 \newcommand{\Xvar}{\operatorname{var}}
 \newcommand{\Xtr}{\operatorname{tr}}
 \newcommand{\Xdiag}{\operatorname{diag}}
+\newcommand{\Xvec}{\operatorname{vec}}
 
 \section{Variational approximation}
 The goal is to approximate the following posterior distribution:
 \begin{align}
-  P(\bs{\pi},\bs{\nu},\Lambda,\bs{\nu},\bs{x},\bs{s}|\bs{y})=Q(\bs{\pi},\bs{\nu},\Lambda,\bs{\nu},\bs{x},\bs{s})
+  P(\bs{\pi},\bs{\nu},\Lambda,\bs{\mu},\bs{x},\bs{s}|\bs{y})=Q(\bs{\pi},\bs{\nu},\Lambda,\bs{\mu},\bs{x},\bs{s})
 \end{align}
 The following approximation is assumed:
 \begin{align}
-  Q(\bs{\pi},\bs{\nu},\Lambda,\bs{\nu},\bs{x},\bs{s})=Q(\bs{\pi},\bs{\nu})Q(\Lambda,\bs{\nu})Q(\bs{x},\bs{s})
+  Q(\bs{\pi},\bs{\nu},\Lambda,\bs{\mu},\bs{x},\bs{s})=Q(\bs{\pi},\bs{\nu})Q(\Lambda,\bs{\mu})Q(\bs{x},\bs{s})
 \end{align}
-The mean field approximation results in the folling factorization:
+It further factorizes into:
 \begin{align}
-  Q(\bs{\pi},\bs{\nu})Q(\Lambda,\bs{\nu})Q(\bs{x},\bs{s})=Q(\bs{\pi})\prod_s\prod_q Q(\nu_q^s)\prod_s\prod_p Q(\tilde{\Lambda}^s_p) \prod_n Q(\Xx|\Xs)Q(\Xs)
+  Q(\bs{\pi},\bs{\nu})Q(\Lambda,\bs{\mu})Q(\bs{x},\bs{s})=Q(\bs{\pi})\prod_s\prod_q Q(\nu_q^s)\prod_s\prod_p Q(\tilde{\Lambda}^s_p) \prod_n Q(\Xx|\Xs)Q(\Xs)
 \end{align}
 Here, $\tilde{\Lambda}^s$ is the concatenation of $\Lambda^s$ and $\bs{\mu}^s$:
 \begin{align}
   \tilde{\Lambda}^s:=[\Lambda^s \: \bs{\mu}^s].
 \end{align}
+The factors are distributed as follows:
 \begin{align}
   Q(\Xp)=\mathcal{D}(\Xp|\alpha\bs{m})
 \end{align}
 \begin{align}
- Q(\nu^s_q)=\mathcal{G}(\nu^s_q|a_q, b_q^s)
+ Q(\nu^s_q)=\mathcal{G}(\nu^s_q|a, b_q^s)
 \end{align}
 \begin{align}
-  Q(\Xlt_p)=\mathcal{N}(\Xlt_p|\Xltm,\Xltv)
+  Q(\Xlt_p)=\mathcal{N}(\Xlt_p|\Xltmp,\Xltvp)
 \end{align}
 \begin{align}
   Q(\Xx|\Xs)=\mathcal{N}(\Xx|\Xxm,\Xxv)
@@ -98,7 +122,6 @@ Here, $\tilde{\Lambda}^s$ is the concatenation of $\Lambda^s$ and $\bs{\mu}^s$:
 \begin{align}
   Q(\Xs)\text{ is }N\times S
 \end{align}
-
 
 \subsection{$Q(\Xp)$}
 \begin{align}
@@ -110,134 +133,160 @@ Here, $\tilde{\Lambda}^s$ is the concatenation of $\Lambda^s$ and $\bs{\mu}^s$:
 
 \subsection{$Q(\nu_q^s)$}
 \begin{align}
- Q(\nu^s_q)=\mathcal{G}(\nu^s_q|a_q, b_q^s)
+ Q(\nu^s_q)=\mathcal{G}(\nu^s_q|a, b_q^s)
 \end{align}
 \begin{align}
-a_q&=a+\frac{P}{2} \\
-b_q^s&=b+\frac{1}{2}\sum_p<\Xl_{pq}{}^2> \\
-&=b+\frac{1}{2}\sum_p \Xltmq{}^2 + \Xltv_{qq}
+a&=a^*+\frac{P}{2} \\
+b_q^s&=b^*+\frac{1}{2}\sum_p<\Xl_{pq}{}^2> \\
+&=b+\frac{1}{2}\sum_p\left(\Xltmpq{}^2 + \Xltvp_{qq}\right)
 \end{align}
-Here, we solved $<\Xlt_{pq}{}^2>$ by eq. \ref{eq:x2}.
+Here, we solved $<\Xlt_{pq}{}^2>$ by eq.~\ref{eq:x2}.
 
 \subsection{$Q(\Xlt_p)$}
 \begin{align}
-  Q(\Xlt_p)=\mathcal{N}(\Xlt_p|\Xltm,\Xltv)
+  Q(\Xltp)=\mathcal{N}(\Xltp|\Xltmp,\Xltvp)
 \end{align}
-
+The extended loading matrix $\Xlt$ is $P\times (Q+1)$ and factorizes over rows:
 \begin{align}
-  %\Xlm=\left[\Xpsii\sum_n Q(s^n)\Xy{\Xxm}^T\Xls\right]
+  \Xlt=\left[
+    \begin{array}{ccc|c}
+      \Xl_{11} & \cdots & \Xl_{1Q} & \mu^s_1 \\
+      \vdots & \vdots & \vdots & \vdots \\
+      \Xl_{p1} & \cdots & \Xl_{pQ} & \mu^s_p \\
+      \vdots & \vdots & \vdots & \vdots \\
+      \Xl_{P1} & \cdots & \Xl_{PQ} & \mu^s_P
+    \end{array}
+  \right]
 \end{align}
-
+The row mean is $(Q+1)\times 1$:
 \begin{align}
-  {\Xls}^{-1}&=\Psi^{-1}_{pp}\sum_n Q(s^n)<\Xx {\Xx}^T>+\Xdiag[<\Xn>] \\
-    &=\Psi^{-1}\sum_n Q(s^n)\left(\Xxm{\Xxm}^T+\Xxs\right)+\Xdiag[\frac{a^s_1}{b^s_1},\dots,\frac{a^s_Q}{b^s_Q}]
+  \Xltmp=\begin{bmatrix}
+    \Xlmp \\
+    \Xump
+  \end{bmatrix}
 \end{align}
-Here, we solved $<\Xx {\Xx}^T>$ by eq. \ref{eq:xx}.
- 
-
-
-
-
-
-\section{Update equations}
 \begin{align}
-  Q(\bs{x},\bs{s},\bs{\pi},\bs{\Lambda},\bs{\nu})=Q(\Xp)\prod_{s,p}Q(\Xl_p)\prod_{s,q}Q(\nu_q^s)\prod_n Q(\Xx|\Xs)Q(\Xs)
+  \Xlmp
+  &=\Xltvp_{\Lambda\Lambda}\left(\Xpsii_{pp}\sum_n Q(\Xs)y^n_p<\Xx>\right) \\
+  &=\Xltvp_{\Lambda\Lambda}\left(\Xpsii_{pp}\sum_n Q(\Xs)y^n_p\Xxm\right)
 \end{align}
-
-\subsection{$Q(\Xl_p)$}
 \begin{align}
-  Q(\Xl_p)\sim\mathcal{N}(\Xlm_p,\Xls)
+  \Xump
+  &=\Xltvp_{\mu\mu}\left(\Xpsii_{pp}\sum_n Q(\Xs)y^n_p+\nu^*_p\mu^*_p\right)
 \end{align}
-
+The row covariance matrix is $P\times(Q+1)$ and decomposes into $4$ blocks:
 \begin{align}
-  %\Xlm=\left[\Xpsii\sum_n Q(s^n)\Xy{\Xxm}^T\Xls\right]
+  \Xltvpi=\begin{bmatrix}
+    \Xlvplli & \Xlvplui \\
+    \Xlvpuli & \Xlvpuui
+  \end{bmatrix}
 \end{align}
-
+$\Xlvpll$ is $Q\times Q$:
 \begin{align}
-  {\Xls}^{-1}&=\Psi^{-1}_{pp}\sum_n Q(s^n)<\Xx {\Xx}^T>+\Xdiag[<\Xn>] \\
-    &=\Psi^{-1}\sum_n Q(s^n)\left(\Xxm{\Xxm}^T+\Xxs\right)+\Xdiag[\frac{a^s_1}{b^s_1},\dots,\frac{a^s_Q}{b^s_Q}]
+  \Xlvplli
+  &=\Xdiag[<\Xn>]+\Xpsii\sum_n Q(\Xs)<\Xx{\Xx}^T> \\
+  &=\Xdiag[\frac{a}{b^s_1},...,\frac{a}{b^s_Q}]+\Xpsii\sum_n Q(\Xs)\left(\Xxm{\Xxm}^T+\Xxv\right) \label{eq:ulvppli}
 \end{align}
-Here, we solved $<\Xx {\Xx}^T>$ by eq. \ref{eq:xx}.
-
-\subsection{$Q(\nu_q^s)$}
+Eq.~\ref{eq:ulvppli} follows from eq.~\ref{eq:xx}. \\
+$\Xlvplui$ is $Q\times 1$:
 \begin{align}
- Q(\nu_q^s)\sim\mathcal{G}(a_q^s, b_q^s)
+  \Xlvplui
+  &=\Xpsii_{pp}\sum_n Q(\Xs)<\Xx> \\
+  &=\Xpsii_{pp}\sum_n Q(\Xs)\Xxm
 \end{align}
-
+$\Xlvpuu$ is $1\times 1$:
 \begin{align}
-a_q^s&=a+\frac{P}{2} \\
-b_q^s&=b+\frac{1}{2}\sum_p<{\Lambda^s_{pq}}^2> \\
-&=b+\frac{1}{2}\sum_p {\overline{\Lambda}_{pq}^s}^2+\Sigma_{qq}^{s,p}
+  \Xlvpuui&=
+  \nu^*_p+\Xpsii_{qq}\sum_n Q(\Xs)
 \end{align}
-Here, we solved $<{\Lambda^s_{pq}}^2>$ by eq. \ref{eq:x2}.
 
 \subsection{$Q(\Xx|\Xs)$}
 \begin{align}
-  Q(\Xx|\Xs)\sim\mathcal{N}(\Xxm,\Xxs)
+  Q(\Xx|\Xs)=\mathcal{N}(\Xx|\Xxm,\Xxv)
 \end{align}
-
 \begin{align}
-  \Xxm=\Xxs{\Xlm}^T\Xpsii\Xy
+  \Xxm
+  &=\Xxv<{\Xl}^T\Xpsii(\Xy-\Xu)> \\
+  &=\Xxv\left[{\Xlm}^T\Xpsii\left(\Xy-\Xum\right)-\bs{v}\right] \label{eq:uxxm}
 \end{align}
-
+Eq.~\ref{eq:uxxm} follows from eq.~\ref{eq:XAy} and $\bs{v}$ is defined as
+\begin{align}
+  v_q
+  &=\Xtr[\Xpsii\Xcov[\Xl_{:q},\Xu]] \\
+  &=\sum_p \Xpsii_{pp} {\Xlvplu}_q. \label{eq:uxxmv}
+\end{align}
+Eq.~\ref{eq:uxxmv} follows from $\Xcov[\Xl_{pq},\mu^s_{p^\prime}]=0$ if $p\neq p^\prime$ and $\Xcov[\Xl_{pq},\mu^s_{p}]={\Xlvplu}_q$.
 \begin{align}
   {\Xxs}^{-1}=<{\Xl}^T \Xpsii \Xl>+I
 \end{align}
-We solve $<{\Xl}^T \Xpsii \Xl>$ by eq. $\ref{eq:xAy}$ and using that $\Xcov[\Xl_p,\Xl_{p^\prime}]=0$ for $p\ne p^\prime$:
+$<{\Xl}^T \Xpsii \Xl>$ is solved by eq. $\ref{eq:XAY}$ and $\Xcov[\Xl_{pi},\Xl_{p^\prime j}]=0$ for $p\ne p^\prime$:
 \begin{align}
   <{\Xl}^T \Xpsii \Xl>_{ij}&=<{\Xl_{:i}}^T \Xpsii \Xl_{:j}> \\
   &=<\Xl_{:i}>^T\Xpsii <\Xl_{:j}>+\sum_p\sum_{p^\prime} \Xpsii_{pp^\prime}\Xcov[\Xl_{pi},\Xl_{p^\prime j}] \\
   &=<\Xl_{:i}>^T\Xpsii <\Xl_{:j}>+\sum_p \Xpsii_{pp}\Xcov[\Xl_{pi},\Xl_{pj}] \\
-  &={\Xlm_{:i}}^T\Xpsii \Xlm_{:j}+\sum_p \Xpsii_{pp}\Xls_{ij}
+  &={\Xlm_{:i}}^T\Xpsii \Xlm_{:j}+\sum_p \Xpsii_{pp}{\Xlvpll}_{ij}
 \end{align}
 
 \subsection{$Q(\Xs)$}
 \begin{align}
   \ln Q(\Xs)
-  &=\left[\psi(\omega u_s)-\psi(\omega)\right]+\frac{1}{2}\ln |\Xxs|+<\ln P(\Xy|\Xx,\Xs,\Xl,\Psi)>+\text{const} \\
-  &\propto \psi(\omega u_s)+\frac{1}{2}\ln|\Xxs|-\frac{1}{2}(\Xy-\Xlm\Xxm)^T\Xpsii(\Xy-\Xlm\Xxm) \\
-  &\qquad-\frac{1}{2}\sum_p \Xpsii_{pp}\Xdiag[\Xls]^T\Xdiag[\Xxs]
+  &=\psi(\alpha m_s)+\frac{1}{2}\ln |\Xxs|+<\ln P(\Xy|\Xx,\Xs,\Xl,\Psi)> \label{eq:usqe} \\
+  &=\psi(\alpha m_s)+\frac{1}{2}\ln |\Xxs| \nonumber \\
+  &\quad-\frac{1}{2}\Xtr[\Xpsii(\Xy-\Xltm\Xxtm)(\Xy-\Xltm\Xxtm)^T] \nonumber \\
+  &\quad-\frac{1}{2}\sum_p\Xpsii_{pp}\left(\sum_q\Xltmpq{}^2\Xxtv_{qq}+\Xxtmq{}^2\Xltvp_{qq}+\Xltvp_{qq}\Xxtv_{qq}\right)
 \end{align}
-
-Here we solved for $<\ln P(\Xy|\Xx,\Xs,\Xl,\Psi)>$ and ignored constant terms:
+$\Xxt$ is defined as:
 \begin{align}
-<\ln P(\Xy|\Xx,\Xs,\Xl,\Psi)>=-\frac{P}{2}\ln 2\pi-\frac{1}{2}\ln|\Xpsii|-\frac{1}{2}<(\Xy-\Xl\Xx)^T\Xpsii(\Xy-\Xl\Xx)>
-\end{align}
-
-We solve $<(\Xy-\Xl\Xx)^T\Xpsii(\Xy-\Xl\Xx)>$ by eq. \ref{eq:xAx}:
-\begin{align}
-  <(\Xy&-\Xl\Xx)^T\Xpsii(\Xy-\Xl\Xx)> \\
-  &=<\Xy-\Xl>^T\Xpsii<\Xy-\Xl\Xx>+\Xtr[\Xpsii V] \\
-  &=(\Xy-<\Xl><\Xx>)^T\Xpsii(\Xy-<\Xl><\Xx>)+\Xtr[\Xpsii V] \\
-  &=(\Xy-\Xlm\Xxm)^T\Xpsii(\Xy-\Xlm\Xxm)+\Xtr[\Xpsii V]
-\end{align}
-
-The covariance matrix $V$ is diagonal since $\Xcov[\Xl_p,\Xl_{p^\prime}]=0$ for $p\ne p^\prime$:
-\begin{align}
-  V:=\Xvar[\Xl\Xx]=
+  \Xxt=
   \begin{bmatrix}
-  \Xvar[\Xl_1\Xx] & \cdots & 0 \\
-  \cdots & \Xvar[\Xl_p\Xx] & \cdots \\
-  0   & \cdots & \Xvar[\Xl_P\Xx]
+    \Xx \\
+    1
   \end{bmatrix}
 \end{align}
-To solve $\Xvar[\Xl_p\Xx]$, we use eq. \ref{eq:vxy} and \ref{eq:x2}, and assume $<\Xl_{pq}>=0$, $<\Xx_q>=0$:
+The expectation in eq.~\ref{eq:usqe} is:
 \begin{align}
-  \Xvar[\Xl_p\Xx]
-  &=\sum_q<{\Xl_{pq}}^2><{\Xx_q}^2>-<{\Xl_{pq}}>^2<{\Xx_q}>^2 \\
-  &=\sum_q<{\Xl_{pq}}^2><{\Xx_q}^2> \\
-  &=\sum_q (<{\Xl_{pq}}>^2+\Xvar[\Xl_{pq}])(<{\Xx_{q}}>^2+\Xvar[{\Xx_{q}}]) \\
-  &=\sum_q \Xvar[\Xl_{pq}]\Xvar[{\Xx_{q}}] \\
-  &=\sum_q \Xls_{qq}\Xxs_{qq}=\Xdiag[\Xls]^T\Xdiag[\Xxs]
+  <\ln P(\Xy|\Xx,\Xs,\Xl,\Psi)>=-\frac{1}{2}\Xtr[\Xpsii<(\Xy-\Xlt\Xxt)(\Xy-\Xlt\Xxt)^T>]+\text{const} \label{eq:usle}
 \end{align}
-The trace is thus
 \begin{align}
-  \Xtr[\Xpsii V]=\sum_p \Xpsii_{pp}\Xdiag[\Xls]^T\Xdiag[\Xls]
+  <(\Xy-\Xlt\Xxt)(\Xy-\Xlt\Xxt)^T>
+  &=(\Xy-\Xltm\Xxtm)(\Xy-\Xltm\Xxtm)^T+\Xcov[\Xy-\Xlt\Xxt]] \label{eq:use2} \\
+  &=(\Xy-\Xltm\Xxtm)(\Xy-\Xltm\Xxtm)^T+V \label{eq:use}
 \end{align}
-which results in
+Eq.~\ref{eq:use2} follows from eq.~\ref{eq:xx}. \\
+$V$ is diagonal, since rows are indepenent:
 \begin{align}
-  <(\Xy&-\Xl\Xx)^T\Xpsii(\Xy-\Xl\Xx)> \\
-  &=(\Xy-\Xlm\Xxm)^T\Xpsii(\Xy-\Xlm\Xxm)+\sum_p \Xpsii_{pp}\Xdiag[\Xls]^T\Xdiag[\Xls].
+  V=
+  \begin{bmatrix}
+    \Xvar[\Xltb_1{}^T\Xxt] & \cdots & 0 \\
+    \cdots & \Xvar[\Xltb_p{}^T\Xxt] & \cdots \\
+    0   & \cdots & \Xvar[\Xltb_P{}^T\Xxt]
+  \end{bmatrix}
+\end{align}
+\begin{align}
+  \Xvar[\Xltp{}^T\Xxt]
+  &=\sum_q\Xvar[\Xltpq\Xxtq] \\
+  &=\sum_q<\Xltpq{}^2><\Xxtq{}^2>-<\Xltpq>^2<\Xxtq>^2 \label{eq:usv1} \\
+  &=\sum_q(<\Xltpq>^2+\Xvar[\Xltpq])(<\Xxtq>^2+\Xvar[\Xxtq])-<\Xltpq>^2<\Xxtq>^2 \label{eq:usv2} \\
+  &=\sum_q<\Xltpq>^2\Xvar[\Xxtq]+<\Xxtq>^2\Xvar[\Xltpq]+\Xvar[\Xltpq]\Xvar[\Xxtq] \\
+  &=\sum_q\Xltmpq{}^2\Xxtv_{qq}+\Xxtmq{}^2\Xltvp_{qq}+\Xltvp_{qq}\Xxtv_{qq}
+\end{align}
+Eq.~\ref{eq:usv1} follows from eq.~\ref{eq:vxy}, eq.~\ref{eq:usv2} from eq.~\ref{eq:x2}. \\
+Eq.~\ref{eq:use} can now be resubsituted into eq.~\ref{eq:usle}:
+\begin{align}
+  <\ln P(\Xy|\Xx,\Xs,\Xl,\Psi)>
+  &=-\frac{1}{2}\Xtr[\Xpsii <(\Xy-\Xlt\Xxt)(\Xy-\Xlt\Xxt)^T>] \\
+  &=-\frac{1}{2}\Xtr[\Xpsii \left((\Xy-\Xltm\Xxtm)(\Xy-\Xltm\Xxtm)^T+V\right)] \\
+  &=-\frac{1}{2}\Xtr[\Xpsii(\Xy-\Xltm\Xxtm)(\Xy-\Xltm\Xxtm)^T + \Xpsii V] \\
+  &=-\frac{1}{2}\Xtr[\Xpsii(\Xy-\Xltm\Xxtm)(\Xy-\Xltm\Xxtm)^T] \nonumber \\
+  &\quad-\frac{1}{2}\sum_p\Xpsii_{pp}\left(\sum_q\Xltmpq{}^2\Xxtv_{qq}+\Xxtmq{}^2\Xltvp_{qq}+\Xltvp_{qq}\Xxtv_{qq}\right) \label{eq:usef}
+\end{align}
+Eq.~\ref{eq:usef} can now be resubsituted into eq.~\ref{eq:usqe}:
+\begin{align}
+  \ln Q(\Xs)
+  &=\psi(\alpha m_s)+\frac{1}{2}\ln |\Xxs|+<\ln P(\Xy|\Xx,\Xs,\Xl,\Psi)> \\
+  &=\psi(\alpha m_s)+\frac{1}{2}\ln |\Xxs| \nonumber \\
+  &\quad-\frac{1}{2}\Xtr[\Xpsii(\Xy-\Xltm\Xxtm)(\Xy-\Xltm\Xxtm)^T] \nonumber \\
+  &\quad-\frac{1}{2}\sum_p\Xpsii_{pp}\left(\sum_q\Xltmpq{}^2\Xxtv_{qq}+\Xxtmq{}^2\Xltvp_{qq}+\Xltvp_{qq}\Xxtv_{qq}\right)
 \end{align}
 
 \section{Equations}
@@ -248,36 +297,40 @@ which results in
   \label{eq:x2}
   <\bs{x}^2>=<\bs{x}>^2+\Xvar[\bs{x}]
 \end{align}
-
 \begin{align}
   \label{eq:xAx}
   <\bs{x}^T A \bs{x}>=<\bs{x}>^T A <\bs{x}> + \Xtr[A \Xvar[\bs{x}]]
 \end{align}
-
 \begin{align}
   \label{eq:xAy}
   <\bs{x}^T A \bs{y}>
   &=<\bs{x}>^T A <\bs{y}> + \Xtr[A \Xcov[\bs{y},\bs{x}]] \\
-  &=<\bs{x}>^T A <\bs{y}> + \sum_i\sum_j A_{ij} \Xcov[\bs{x}_i,\bs{y}_j]
+  &=<\bs{x}>^T A <\bs{y}> + \Xvec[A]^T\Xvec[\Xcov[\bs{x},\bs{y}]]
 \end{align}
-
+\begin{align}
+  \label{eq:XAY}
+  <X A Y>&=<X>A<Y>+V \\
+  V_{ij}&=\Xtr[A\Xcov[Y_{:j},X_i]]=\Xvec[A]^T\Xvec[\Xcov[X_i,Y_{:j}]] \nonumber
+\end{align}
+\begin{align}
+  \label{eq:XAy}
+  <X A \bs{y}>&=<X>A<\bs{y}>+\bs{v} \\
+  \bs{v}_{i}&=\Xtr[A\Xcov[\bs{y},A_i]]=\Xvec[A]^T\Xvec[\Xcov[X_i,\bs{y}]] \nonumber
+\end{align}
 \begin{align}
   \label{eq:xx}
   <\bs{x}\bs{x}^T>=<\bs{x}><\bs{x}>^T+ \Xcov[\bs{x}]
 \end{align}
-
 If $M$ and $\Xvx$ are independent:
 \begin{align}
   \label{eq:Mx}
   <M \Xvx>=<M><\Xvx>
 \end{align}
-
 If $\Xvx$ and $\Xvy$ are independent:
 \begin{align}
-  \label{eq:vxy}
   \Xvar[\Xvx^T\Xvy]
-  &=\sum_i \Xvar[\Xvx_i \Xvy_i] \\
-  &=\sum_i <\Xvx_i^2><\Xvy_i^2> - <\Xvx_i>^2<\Xvy_i>^2 
+  &=\sum_i \Xvar[\Xvx_i \Xvy_i] \nonumber\\
+  &=\sum_i <\Xvx_i^2><\Xvy_i^2> - <\Xvx_i>^2<\Xvy_i>^2 \label{eq:vxy}
 \end{align}
 
 

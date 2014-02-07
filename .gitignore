@@ -4,3 +4,8 @@
 *.aux
 *.out
 .DS_Store
+*.fdb_latexmk
+*.fls
+*.dvi
+*.fdb_latexmk
+*.fls
