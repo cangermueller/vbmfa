@@ -9,3 +9,6 @@
 *.dvi
 *.fdb_latexmk
 *.fls
+
+*.pyc
+*.rope*
