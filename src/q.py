@@ -1,5 +1,10 @@
 import numpy as np
 from scipy.special import digamma
+import pdb
+
+
+def is_pd(M):
+    return np.all(np.linalg.eigvals(M) > 0)
 
 
 class Pi:
@@ -13,6 +18,7 @@ class Pi:
 
     def update(self, h, q_s):
         self.alpha = h.alpha * h.m + np.sum(q_s.s, 1)
+        assert np.all(self.alpha > h.alpha*h.m)
 
     def __str__(self):
         return 'alpha: {:s}'.format(self.alpha.__str__())
@@ -33,9 +39,14 @@ class Nu:
         self.a = h.a+0.5*self.P
         self.b.fill(h.b)
         self.b += 0.5*(np.sum(q_lm.l.mean**2, 0)+np.diag(np.sum(q_lm.cov, 0))[:-1])
+        assert np.all(self.b > h.b)
 
     def __str__(self):
         return 'a: {:f}\nb: {:s}'.format(self.a, self.b.__str__())
+
+    def expectation(self):
+        return self.a/self.b
+
 
 
 class Mu:
@@ -47,9 +58,10 @@ class Mu:
     def init_rnd(self):
         self.mean = np.random.normal(loc=0.0, scale=0.1, size=self.P)
         self.pre = np.random.normal(loc=1.0, scale=1e-5, size=self.P)
+        self.cov = 1/self.pre
 
     def __str__(self):
-        return 'mean:\n{:s}\npre:\n{:s}'.format(self.mean.__str__(), self.pre.__str__())
+        return 'mean:\n{:s}\ncov:\n{:s}'.format(self.mean.__str__(), self.cov.__str__())
 
 
 class Lambda:
@@ -61,18 +73,20 @@ class Lambda:
 
     def init_rnd(self):
         self.mean = np.random.normal(loc=0.0, scale=0.1, size=self.P*self.Q).reshape(self.P, self.Q)
-        self.cov = np.empty((self.P, self.Q, self.Q))
         self.pre = np.empty((self.P, self.Q, self.Q))
+        self.cov = np.empty((self.P, self.Q, self.Q))
         for p in range(self.P):
-            self.cov[p] = np.diag(np.random.normal(loc=1.0, scale=1e-5, size=self.Q))
-            self.pre[p] = np.linalg.inv(self.cov[p])
+            self.pre[p] = np.diag(np.random.normal(loc=1.0, scale=1e-5, size=self.Q))
+            if self.Q > 0:
+                self.cov[p] = np.linalg.inv(self.pre[p])
+            else:
+                self.cov[p] = self.pre[p]
 
     def __str__(self):
         s = 'mean:\n{:s}'.format(self.mean.__str__())
         for p in range(self.P):
             s += '\ncov[{:d}]:\n{:s}'.format(p, self.cov[p].__str__())
         return s
-
 
 
 class LambdaMu:
@@ -88,7 +102,7 @@ class LambdaMu:
     def init_rnd(self):
         self.m.init_rnd()
         self.l.init_rnd()
-        self.pre_lm = np.random.normal(loc=1.0, scale=1e-5, size=self.P*self.Q).reshape(self.P, self.Q)
+        self.pre_lm = np.zeros((self.P, self.Q))
         self.build_cov()
 
     def update(self, h, q_nu, q_x, q_s, y):
@@ -96,6 +110,7 @@ class LambdaMu:
         Q = self.Q
         N = q_s.s.shape[1]
 # l.pre
+        assert np.all(q_nu.b > 0.0)
         tt = np.diag(q_nu.a/q_nu.b)
         t = np.zeros((Q, Q))
         for n in range(N):
@@ -103,12 +118,12 @@ class LambdaMu:
         self.l.pre = np.empty((P, Q, Q))
         for p in range(P):
             self.l.pre[p] = tt+h.psii_d[p]*t
-            self.l.cov[p] = np.linalg.inv(self.l.pre[p])
+            assert is_pd(self.l.pre[p])
 # m.pre
         self.m.pre = h.nu+h.psii_d*np.sum(q_s.s)
+        assert np.all(self.m.pre > 0.0)
 # pre_lm
         self.pre_lm = np.outer(h.psii_d, q_x.mean.dot(q_s.s[self.s, :]))
-        self.cov_lm = 1/self.pre_lm
         self.build_cov()
 # l.mean
         self.l.mean = np.empty((P, Q))
@@ -125,14 +140,24 @@ class LambdaMu:
         self.pre = np.empty((P, Q+1, Q+1))
         self.cov = np.empty((P, Q+1, Q+1))
         self.pre[:, Q, Q] = self.m.pre
+        self.cov_lm = np.empty((P, Q))
         for p in range(P):
             self.pre[p, :Q, :Q] = self.l.pre[p]
             self.pre[p, :Q, Q] = self.pre_lm[p]
             self.pre[p, Q, :Q] = self.pre_lm[p]
+            assert is_pd(self.pre[p])
             self.cov[p] = np.linalg.inv(self.pre[p])
+            assert is_pd(self.cov[p])
+            self.l.cov[p] = self.cov[p, :Q, :Q]
+            self.cov_lm[p] = self.cov[p, :Q, Q]
+        self.m.cov = self.cov[:, Q, Q]
+        assert(np.all(self.m.cov > 0))
 
     def __str__(self):
-        return 'mu:\n{:s}\n\nlambda:\n{:s}'.format(self.m.__str__(), self.l.__str__())
+        s = 'mu:\n{:s}\n\nlambda:\n{:s}'.format(self.m.__str__(), self.l.__str__())
+        for p in range(self.P):
+            s += '\n\ncov[{:d}]:\n{:s}\ncov_lm[{:d}]\n{:s}'.format(p, self.cov[p].__str__(), p, self.cov_lm[p].__str__())
+        return s
 
 
 class X:
@@ -145,25 +170,34 @@ class X:
     def init_rnd(self):
         self.mean = np.random.normal(loc=0.0, scale=1e-1, size=self.Q*self.N).reshape(self.Q, self.N)
         self.cov = np.diag(np.random.normal(loc=1.0, scale=1e-5, size=self.Q))
-        self.pre = np.linalg.inv(self.cov)
+        if self.Q > 0:
+            self.pre = np.linalg.inv(self.cov)
+        else:
+            self.pre = self.cov
 
-    def update(self, h, q_lm, y):
+    def update(self, h, q_lm, y, update_cov=True):
         Q = self.Q
-# cov
-        self.pre = np.eye(Q) + np.transpose(q_lm.l.mean).dot(h.psii).dot(q_lm.l.mean)
-        for i in range(Q):
-            for j in range(Q):
-                self.pre[i, j] += h.psii_d.dot(q_lm.l.cov[:, i, j])
-        self.cov = np.linalg.inv(self.pre)
-# mean
+        # cov
+        if update_cov:
+            self.pre = np.eye(Q) + np.transpose(q_lm.l.mean).dot(h.psii).dot(q_lm.l.mean)
+            for i in range(Q):
+                for j in range(Q):
+                    self.pre[i, j] += h.psii_d.dot(q_lm.l.cov[:, i, j])
+            assert is_pd(self.pre)
+            if self.Q > 0:
+                self.cov = np.linalg.inv(self.pre)
+            else:
+                self.cov = self.pre
+            #print 'cov updated'
+        # mean
         B = self.cov.dot(np.transpose(q_lm.l.mean)).dot(h.psii)
-        # v = h.psii_d.dot(q_lm.cov_lm)
         v = np.transpose(q_lm.cov_lm).dot(h.psii_d)
-        a = -B.dot(q_lm.m.mean)-self.cov.dot(v) # insert v
-        self.mean = B.dot(y)+a.reshape((len(a), 1)) # a is broadcasted
+        a = -B.dot(q_lm.m.mean)-self.cov.dot(v)
+        self.mean = B.dot(y)+a[:, np.newaxis]
+        #print 'Update x2'
 
     def __str__(self):
-        return 'mean:\n{:s}\ncov:\n{:s}'.format(self.mean.__str__(), self.cov.__str__())
+        return 'mean^T:\n{:s}\ncov:\n{:s}'.format(np.transpose(self.mean).__str__(), self.cov.__str__())
 
 
 class S:
@@ -192,7 +226,10 @@ class S:
         lm_mean_s = np.hstack((q_lm.l.mean, q_lm.m.mean.reshape(P, 1)))**2
 
         # const part
-        t = digamma(q_pi.alpha[s])+0.5*np.log(np.abs(np.linalg.det(q_x.cov)))
+        if Q > 0:
+            t = digamma(q_pi.alpha[s])+0.5*np.log(np.abs(np.linalg.det(q_x.cov)))
+        else:
+            t = digamma(q_pi.alpha[s])
         yd = y-q_lm.l.mean.dot(q_x.mean)-q_lm.m.mean.reshape((P, 1))
         for n in range(N):
             t -= 0.5*np.trace(h.psii.dot(np.outer(yd[:,n], yd[:,n])))
@@ -203,4 +240,4 @@ class S:
         self.s[s, :] = t
 
     def __str__(self):
-        return self.s.__str__()
+        return np.transpose(self.s).__str__()

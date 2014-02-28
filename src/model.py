@@ -1,11 +1,14 @@
 import numpy as np
+import copy
+
 import q as qdist
+import pdb
 
 
 class Hyper:
-    def __init__(self, P, Q, S):
+    def __init__(self, P, Q=None, S=1):
         self.P = P
-        self.Q = Q
+        self.Q = P if Q is None else Q
         self.S = S
         self.alpha = 1.0
         self.m = np.ones(S)
@@ -35,7 +38,10 @@ class Model(object):
         self.P = h.P
         self.Q = h.Q
         self.S = h.S
-        self.N = y.shape[1]
+        if (isinstance(y, int)):
+            self.N = y
+        else:
+            self.N = y.shape[1]
         self.q_pi = qdist.Pi(self.S)
         self.q_nu = [qdist.Nu(self.P, self.Q) for s in range(self.S)]
         self.q_lm = [qdist.LambdaMu(self.P, self.Q, s) for s in range(self.S)]
@@ -51,12 +57,28 @@ class Model(object):
             self.q_x[s].init_rnd()
         self.q_s.init_rnd()
 
+    def infer(self, maxit=10, eps=0.01, times=3):
+        models = [copy.deepcopy(self)]
+        mses = [self.mse()]
+        c = 0
+        for i in range(maxit):
+            self.update()
+            models.append(copy.deepcopy(self))
+            mses.append(self.mse())
+            if (mses[-2]-mses[-1]) <= eps:
+                c +=1
+            else:
+                c = 0
+            if c == times:
+                break
+        return [mses, models]
+
     def update(self):
+        self.update_x()
+        self.update_lm()
+        self.update_s()
         self.update_pi()
         self.update_nu()
-        self.update_lm()
-        self.update_x()
-        self.update_s()
 
     def update_pi(self):
         self.q_pi.update(self.h, self.q_s)
@@ -76,8 +98,7 @@ class Model(object):
     def update_s(self):
         for s in range(self.S):
             self.q_s.update(self.h, self.y, s, self.q_pi, self.q_lm[s], self.q_x[s])
-        self.q_s.s = np.exp(self.q_s.s)
-# self.q_s.s = np.maximum(1e-5, np.exp(self.q_s.s))
+        self.q_s.s = np.maximum(np.exp(self.q_s.s), 1e-5)
         self.q_s.s /= np.sum(self.q_s.s, 0)
 
 
@@ -91,3 +112,22 @@ class Model(object):
             st += '\n\nq_x[{:d}]:\n{:s}'.format(s, self.q_x[s].__str__())
         st += '\n\nq_s:\n{:s}'.format(self.q_s.__str__())
         return st
+
+    def predict_y_s(self, s):
+        return self.q_lm[s].l.mean.dot(self.q_x[s].mean)+self.q_lm[s].m.mean[:, np.newaxis]
+
+    def predict_y(self, ss=None):
+        if ss is None:
+            ss = range(self.S)
+        q_s = self.q_s.s[ss]
+        q_s /= np.sum(q_s, 0)
+        yp = np.zeros((self.P, self.N))
+        for i in range(len(ss)):
+            yp += self.predict_y_s(ss[i]).dot(np.diag(q_s[i]))
+        return yp
+
+
+    def mse(self):
+        dy = (self.y-self.predict_y()).ravel('F')
+        return dy.dot(dy)/self.y.shape[1]
+

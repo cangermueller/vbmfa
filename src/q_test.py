@@ -37,6 +37,14 @@ class LambdaTest(unittest.TestCase):
             self.assertNotEqual(np.linalg.det(l.cov[p]), 0.0)
             self.assertEqual(l.pre.shape, (P, Q, Q))
 
+    def test_init_q0(self):
+        P = 5
+        Q = 0
+        l = qdist.Lambda(P, Q)
+        self.assertEqual(l.mean.shape, (P, Q))
+        self.assertEqual(l.cov.shape, (P, Q, Q))
+        self.assertEqual(l.pre.shape, (P, Q, Q))
+
 
 class LambdaMuTest(unittest.TestCase):
 
@@ -59,6 +67,18 @@ class LambdaMuTest(unittest.TestCase):
                 self.assertEqual(lm.pre[p, qq, Q], lm.pre[p, Q, qq])
             self.assertTrue(np.linalg.eigvals(lm.pre[p]).min > 0)
 
+    def test_init_q0(self):
+        P = 10
+        Q = 0
+        s = 1
+        lm = qdist.LambdaMu(P, Q, s)
+        self.assertEqual(lm.pre_lm.shape, (P, Q))
+        self.assertEqual(lm.pre.shape, (P, Q+1, Q+1))
+        self.assertEqual(lm.cov.shape, (P, Q+1, Q+1))
+        for p in range(P):
+            self.assertAlmostEqual(lm.cov[p, 0, 0], lm.m.cov[p])
+            self.assertAlmostEqual(lm.pre[p, 0, 0], lm.m.pre[p])
+
 
 class S(unittest.TestCase):
 
@@ -78,7 +98,16 @@ class X(unittest.TestCase):
         x = qdist.X(Q, N)
         self.assertEqual(x.mean.shape, (Q, N))
         self.assertEqual(x.cov.shape, (Q, Q))
+        self.assertEqual(x.pre.shape, (Q, Q))
         self.assertTrue(x.cov.min > 0.0)
+
+    def test_init_q0(self):
+        Q = 0
+        N = 10
+        x = qdist.X(Q, N)
+        self.assertEqual(x.mean.shape, (Q, N))
+        self.assertEqual(x.cov.shape, (Q, Q))
+        self.assertEqual(x.pre.shape, (Q, Q))
 
 
 if __name__ == '__main__':
