@@ -3,6 +3,7 @@ import data
 
 import unittest
 import numpy as np
+import numpy.testing as nt
 import pdb
 
 
@@ -81,7 +82,6 @@ class TestModel(unittest.TestCase):
     def is_pd(self, m):
         return np.diagonal(m).min > 0.0 and (np.linalg.eigvals(m) > 0).all()
 
-
     def test_update_q(self):
         P = 10
         Q = 5
@@ -113,6 +113,17 @@ class TestModel(unittest.TestCase):
             m.q_s.update(h, y, s, m.q_pi, m.q_lm[s], m.q_x[s])
         m.q_s.s = np.maximum(1e-5, np.exp(m.q_s.s))
         m.q_s.s /= np.sum(m.q_s.s, 0)
+
+    def test_sample_y(self):
+        P = 2
+        N = 3
+        m = model.Model(model.Hyper(P), N)
+        m.h.psi = np.eye(P) * 1e-20
+        y_s = m.sample_y()
+        y_p = m.predict_y()
+        self.assertEqual(y_s.shape, y_p.shape)
+        nt.assert_allclose(y_s, y_p, rtol=1e-2)
+
 
 
 

@@ -15,7 +15,7 @@ class Hyper:
         self.a = 1.0
         self.b = 1.0
         self.mu = np.random.normal(loc=0.0, scale=1.0, size=P)
-        self.nu = np.random.normal(loc=1.0, scale=1e-3, size=P)
+        self.nu = np.ones(P)
         self.psi = np.eye(P)
         self.psii = np.linalg.inv(self.psi)
         self.psii_d = np.diagonal(self.psii)
@@ -57,12 +57,14 @@ class Model(object):
             self.q_x[s].init_rnd()
         self.q_s.init_rnd()
 
-    def infer(self, maxit=10, eps=0.01, times=3):
+    def infer(self, maxit=10, eps=0.01, times=3, update=None):
         models = [copy.deepcopy(self)]
         mses = [self.mse()]
         c = 0
+        if update is None:
+            update = self.update
         for i in range(maxit):
-            self.update()
+            update(self)
             models.append(copy.deepcopy(self))
             mses.append(self.mse())
             if (mses[-2]-mses[-1]) <= eps:
@@ -73,12 +75,12 @@ class Model(object):
                 break
         return [mses, models]
 
-    def update(self):
-        self.update_x()
-        self.update_lm()
-        self.update_s()
-        self.update_pi()
-        self.update_nu()
+    def update(self, model):
+        model.update_x()
+        model.update_lm()
+        model.update_s()
+        model.update_pi()
+        model.update_nu()
 
     def update_pi(self):
         self.q_pi.update(self.h, self.q_s)
@@ -126,6 +128,12 @@ class Model(object):
             yp += self.predict_y_s(ss[i]).dot(np.diag(q_s[i]))
         return yp
 
+    def sample_y(self, ss=None):
+        y_mean = self.predict_y(ss)
+        y = np.empty((self.P, self.N))
+        for n in range(self.N):
+            y[:, n] = np.random.multivariate_normal(mean=y_mean[:, n], cov=self.h.psi, size=1)[:, np.newaxis]
+        return y
 
     def mse(self):
         dy = (self.y-self.predict_y()).ravel('F')

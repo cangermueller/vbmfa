@@ -14,7 +14,7 @@ class Pi:
         self.init_rnd()
 
     def init_rnd(self):
-        self.alpha = np.random.normal(loc=1.0, scale=0.01, size=self.S)
+        self.alpha = np.random.normal(loc=1.0, scale=1e-3, size=self.S)
 
     def update(self, h, q_s):
         self.alpha = h.alpha * h.m + np.sum(q_s.s, 1)
@@ -33,7 +33,7 @@ class Nu:
 
     def init_rnd(self):
         self.a = 1.0
-        self.b = np.random.normal(loc=1.0, scale=1e-3, size=self.Q)
+        self.b = np.ones(self.Q)
 
     def update(self, h, q_lm):
         self.a = h.a+0.5*self.P
@@ -57,7 +57,7 @@ class Mu:
 
     def init_rnd(self):
         self.mean = np.random.normal(loc=0.0, scale=0.1, size=self.P)
-        self.pre = np.random.normal(loc=1.0, scale=1e-5, size=self.P)
+        self.pre = np.ones(self.P)
         self.cov = 1/self.pre
 
     def __str__(self):
@@ -76,16 +76,17 @@ class Lambda:
         self.pre = np.empty((self.P, self.Q, self.Q))
         self.cov = np.empty((self.P, self.Q, self.Q))
         for p in range(self.P):
-            self.pre[p] = np.diag(np.random.normal(loc=1.0, scale=1e-5, size=self.Q))
+            self.pre[p] = np.eye(self.Q)
             if self.Q > 0:
                 self.cov[p] = np.linalg.inv(self.pre[p])
             else:
                 self.cov[p] = self.pre[p]
 
-    def __str__(self):
+    def __str__(self, cov=True):
         s = 'mean:\n{:s}'.format(self.mean.__str__())
-        for p in range(self.P):
-            s += '\ncov[{:d}]:\n{:s}'.format(p, self.cov[p].__str__())
+        if cov:
+            for p in range(self.P):
+                s += '\ncov[{:d}]:\n{:s}'.format(p, self.cov[p].__str__())
         return s
 
 
@@ -105,34 +106,36 @@ class LambdaMu:
         self.pre_lm = np.zeros((self.P, self.Q))
         self.build_cov()
 
-    def update(self, h, q_nu, q_x, q_s, y):
+    def update(self, h, q_nu, q_x, q_s, y, update_pre=True, update_mean=True):
         P = self.P
         Q = self.Q
         N = q_s.s.shape[1]
-# l.pre
-        assert np.all(q_nu.b > 0.0)
-        tt = np.diag(q_nu.a/q_nu.b)
-        t = np.zeros((Q, Q))
-        for n in range(N):
-            t += q_s.s[self.s, n]*(np.outer(q_x.mean[:, n], q_x.mean[:, n])+q_x.cov)
-        self.l.pre = np.empty((P, Q, Q))
-        for p in range(P):
-            self.l.pre[p] = tt+h.psii_d[p]*t
-            assert is_pd(self.l.pre[p])
-# m.pre
-        self.m.pre = h.nu+h.psii_d*np.sum(q_s.s)
-        assert np.all(self.m.pre > 0.0)
-# pre_lm
-        self.pre_lm = np.outer(h.psii_d, q_x.mean.dot(q_s.s[self.s, :]))
-        self.build_cov()
-# l.mean
-        self.l.mean = np.empty((P, Q))
-        for p in range(P):
-            w = np.multiply(q_s.s[self.s, :], y[p])
-            self.l.mean[p] = self.cov[p, :Q, :Q].dot(h.psii_d[p]*q_x.mean.dot(w))
-# m.mean
-        self.m.mean = np.multiply(h.psii_d, y.dot(q_s.s[self.s, :]))+np.multiply(h.mu, h.nu)
-        self.m.mean = np.multiply(self.cov[:, Q, Q], self.m.mean)
+        if update_pre:
+            # l.pre
+            assert np.all(q_nu.b > 0.0)
+            tt = np.diag(q_nu.a/q_nu.b)
+            t = np.zeros((Q, Q))
+            for n in range(N):
+                t += q_s.s[self.s, n]*(np.outer(q_x.mean[:, n], q_x.mean[:, n])+q_x.cov)
+            self.l.pre = np.empty((P, Q, Q))
+            for p in range(P):
+                self.l.pre[p] = tt+h.psii_d[p]*t
+                assert is_pd(self.l.pre[p])
+            # m.pre
+            self.m.pre = h.nu+h.psii_d*np.sum(q_s.s)
+            assert np.all(self.m.pre > 0.0)
+            # pre_lm
+            self.pre_lm = np.outer(h.psii_d, q_x.mean.dot(q_s.s[self.s, :]))
+            self.build_cov()
+        if update_mean:
+            # l.mean
+            self.l.mean = np.empty((P, Q))
+            for p in range(P):
+                w = np.multiply(q_s.s[self.s, :], y[p])
+                self.l.mean[p] = self.cov[p, :Q, :Q].dot(h.psii_d[p]*q_x.mean.dot(w))
+            # m.mean
+            self.m.mean = np.multiply(h.psii_d, y.dot(q_s.s[self.s, :]))+np.multiply(h.mu, h.nu)
+            self.m.mean = np.multiply(self.cov[:, Q, Q], self.m.mean)
 
     def build_cov(self):
         P = self.P
@@ -154,9 +157,9 @@ class LambdaMu:
         assert(np.all(self.m.cov > 0))
 
     def __str__(self):
-        s = 'mu:\n{:s}\n\nlambda:\n{:s}'.format(self.m.__str__(), self.l.__str__())
+        s = 'mu:\n{:s}\n\nlambda:\n{:s}'.format(self.m.__str__(), self.l.__str__(cov=False))
         for p in range(self.P):
-            s += '\n\ncov[{:d}]:\n{:s}\ncov_lm[{:d}]\n{:s}'.format(p, self.cov[p].__str__(), p, self.cov_lm[p].__str__())
+            s += '\n\ncov[{:d}]:\n{:s}'.format(p, self.cov[p].__str__())
         return s
 
 
@@ -175,10 +178,9 @@ class X:
         else:
             self.pre = self.cov
 
-    def update(self, h, q_lm, y, update_cov=True):
+    def update(self, h, q_lm, y, update_pre=True):
         Q = self.Q
-        # cov
-        if update_cov:
+        if update_pre:
             self.pre = np.eye(Q) + np.transpose(q_lm.l.mean).dot(h.psii).dot(q_lm.l.mean)
             for i in range(Q):
                 for j in range(Q):
@@ -188,13 +190,11 @@ class X:
                 self.cov = np.linalg.inv(self.pre)
             else:
                 self.cov = self.pre
-            #print 'cov updated'
-        # mean
+
         B = self.cov.dot(np.transpose(q_lm.l.mean)).dot(h.psii)
         v = np.transpose(q_lm.cov_lm).dot(h.psii_d)
         a = -B.dot(q_lm.m.mean)-self.cov.dot(v)
         self.mean = B.dot(y)+a[:, np.newaxis]
-        #print 'Update x2'
 
     def __str__(self):
         return 'mean^T:\n{:s}\ncov:\n{:s}'.format(np.transpose(self.mean).__str__(), self.cov.__str__())
