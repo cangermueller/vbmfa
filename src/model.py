@@ -10,13 +10,29 @@ class Hyper:
         self.P = P
         self.Q = P if Q is None else Q
         self.S = S
+        self.init_non_rnd()
+
+    def init_rnd(self):
+        self.alpha = np.random.normal(loc=1.0, scale=1e-4)
+        self.m = np.random.normal(loc=1.0, scale=1e-4, size=self.S)
+        self.a = np.random.normal(loc=1.0, scale=1e-4)
+        self.b = np.random.normal(loc=1.0, scale=1e-4)
+        self.mu = np.random.normal(loc=0.0, scale=1.0, size=self.P)
+        self.nu = np.random.normal(loc=1.0, scale=1e-4, size=self.P)
+        self.psi = np.diag(np.random.normal(loc=1.0, scale=1e-4, size=self.P))
+        self.update_psi()
+
+    def init_non_rnd(self):
         self.alpha = 1.0
-        self.m = np.ones(S)
+        self.m = np.ones(self.S)
         self.a = 1.0
         self.b = 1.0
-        self.mu = np.random.normal(loc=0.0, scale=1.0, size=P)
-        self.nu = np.ones(P)
-        self.psi = np.eye(P)
+        self.mu = np.zeros(self.P)
+        self.nu = np.ones(self.P)
+        self.psi = np.eye(self.P)
+        self.update_psi()
+
+    def update_psi(self):
         self.psii = np.linalg.inv(self.psi)
         self.psii_d = np.diagonal(self.psii)
 
@@ -75,7 +91,9 @@ class Model(object):
                 break
         return [mses, models]
 
-    def update(self, model):
+    def update(self, model=None):
+        if model is None:
+            model = self
         model.update_x()
         model.update_lm()
         model.update_s()
@@ -89,9 +107,9 @@ class Model(object):
         for s in range(self.S):
             self.q_nu[s].update(self.h, self.q_lm[s])
 
-    def update_lm(self):
+    def update_lm(self, update_pre=True, update_mean=True):
         for s in range(self.S):
-            self.q_lm[s].update(self.h, self.q_nu[s], self.q_x[s], self.q_s, self.y)
+            self.q_lm[s].update(self.h, self.q_nu[s], self.q_x[s], self.q_s, self.y, update_pre=update_pre, update_mean=update_mean)
 
     def update_x(self):
         for s in range(self.S):
@@ -100,8 +118,8 @@ class Model(object):
     def update_s(self):
         for s in range(self.S):
             self.q_s.update(self.h, self.y, s, self.q_pi, self.q_lm[s], self.q_x[s])
-        self.q_s.s = np.maximum(np.exp(self.q_s.s), 1e-5)
-        self.q_s.s /= np.sum(self.q_s.s, 0)
+        self.q_s.s = np.exp(self.q_s.s)
+        self.q_s.s /= np.maximum(np.sum(self.q_s.s, 0), 1e-10)
 
 
     def __str__(self):

@@ -122,17 +122,19 @@ class LambdaMu:
                 self.l.pre[p] = tt+h.psii_d[p]*t
                 assert is_pd(self.l.pre[p])
             # m.pre
-            self.m.pre = h.nu+h.psii_d*np.sum(q_s.s)
+            self.m.pre = h.nu+h.psii_d*np.sum(q_s.s[self.s,:])
             assert np.all(self.m.pre > 0.0)
             # pre_lm
             self.pre_lm = np.outer(h.psii_d, q_x.mean.dot(q_s.s[self.s, :]))
             self.build_cov()
+
         if update_mean:
             # l.mean
             self.l.mean = np.empty((P, Q))
             for p in range(P):
                 w = np.multiply(q_s.s[self.s, :], y[p])
                 self.l.mean[p] = self.cov[p, :Q, :Q].dot(h.psii_d[p]*q_x.mean.dot(w))
+
             # m.mean
             self.m.mean = np.multiply(h.psii_d, y.dot(q_s.s[self.s, :]))+np.multiply(h.mu, h.nu)
             self.m.mean = np.multiply(self.cov[:, Q, Q], self.m.mean)
@@ -179,11 +181,10 @@ class X:
             self.pre = self.cov
 
     def update(self, h, q_lm, y, update_pre=True):
-        Q = self.Q
         if update_pre:
-            self.pre = np.eye(Q) + np.transpose(q_lm.l.mean).dot(h.psii).dot(q_lm.l.mean)
-            for i in range(Q):
-                for j in range(Q):
+            self.pre = np.eye(self.Q) + np.transpose(q_lm.l.mean).dot(h.psii).dot(q_lm.l.mean)
+            for i in range(self.Q):
+                for j in range(self.Q):
                     self.pre[i, j] += h.psii_d.dot(q_lm.l.cov[:, i, j])
             assert is_pd(self.pre)
             if self.Q > 0:
@@ -193,8 +194,19 @@ class X:
 
         B = self.cov.dot(np.transpose(q_lm.l.mean)).dot(h.psii)
         v = np.transpose(q_lm.cov_lm).dot(h.psii_d)
-        a = -B.dot(q_lm.m.mean)-self.cov.dot(v)
+        #a = -B.dot(q_lm.m.mean)-self.cov.dot(v)
+        a = -B.dot(q_lm.m.mean)
         self.mean = B.dot(y)+a[:, np.newaxis]
+
+         # vv = np.zeros(self.Q)
+         # for q in range(self.Q):
+         #     for p in range(len(h.psii_d)):
+         #         vv[q] += h.psii_d[p] * q_lm.cov_lm[p, q]
+         # mean = np.zeros((self.Q, self.N))
+         # vv = np.zeros(self.Q)
+         # for n in range(self.N):
+         #     mean[:,n] = self.cov.dot(np.transpose(q_lm.l.mean).dot(h.psii).dot((y[:,n]-q_lm.m.mean)[:, np.newaxis]) - vv[:, np.newaxis]).squeeze()
+         # self.mean = mean
 
     def __str__(self):
         return 'mean^T:\n{:s}\ncov:\n{:s}'.format(np.transpose(self.mean).__str__(), self.cov.__str__())
@@ -225,19 +237,23 @@ class S:
         xt_cov_d = np.hstack((np.diagonal(q_x.cov), [0]))
         lm_mean_s = np.hstack((q_lm.l.mean, q_lm.m.mean.reshape(P, 1)))**2
 
-        # const part
+        # n independent
         if Q > 0:
-            t = digamma(q_pi.alpha[s])+0.5*np.log(np.abs(np.linalg.det(q_x.cov)))
+            const = digamma(q_pi.alpha[s])+0.5*np.log(np.abs(np.linalg.det(q_x.cov)))
         else:
-            t = digamma(q_pi.alpha[s])
+            const = digamma(q_pi.alpha[s])
+        # 1
+        const -= 0.5*h.psii_d.dot((lm_mean_s+lm_cov_d).dot(xt_cov_d))
+
+        # trace
+        log_qs = np.zeros(N)
         yd = y-q_lm.l.mean.dot(q_x.mean)-q_lm.m.mean.reshape((P, 1))
         for n in range(N):
-            t -= 0.5*np.trace(h.psii.dot(np.outer(yd[:,n], yd[:,n])))
-        # 1
-        t -= 0.5*h.psii_d.dot((lm_mean_s+lm_cov_d).dot(xt_cov_d))
+            log_qs[n] = -0.5*np.trace(h.psii.dot(np.outer(yd[:,n], yd[:,n])))
         # 2
-        t -= 0.5*h.psii_d.dot(lm_cov_d.dot(xt_mean_s))
-        self.s[s, :] = t
+        log_qs -= 0.5*h.psii_d.dot(lm_cov_d.dot(xt_mean_s))
+        log_qs += const
+        self.s[s, :] = log_qs
 
     def __str__(self):
         return np.transpose(self.s).__str__()
