@@ -1,1 +1,4 @@
+* Find out why lambda does not exactly match vbmfa implementation
 * Transpose y, x
+* q_x.update: include covariance v?
+* remove asserts in q.py

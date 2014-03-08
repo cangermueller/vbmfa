@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.testing as nt
 from scipy.special import digamma
 import pdb
 
@@ -135,6 +136,14 @@ class LambdaMu:
                 w = np.multiply(q_s.s[self.s, :], y[p])
                 self.l.mean[p] = self.cov[p, :Q, :Q].dot(h.psii_d[p]*q_x.mean.dot(w))
 
+            lm = np.zeros((self.P, self.Q))
+            for p in range(self.P):
+                m = np.zeros((self.P, self.Q))
+                for n in range(q_x.N):
+                    m += q_s.s[self.s, n] * y[:,n][:, np.newaxis].dot(q_x.mean[:, n][np.newaxis, :]).dot(self.l.cov[p])
+                lm[p] = h.psii.dot(m)[p]
+            nt.assert_almost_equal(lm, self.l.mean)
+
             # m.mean
             self.m.mean = np.multiply(h.psii_d, y.dot(q_s.s[self.s, :]))+np.multiply(h.mu, h.nu)
             self.m.mean = np.multiply(self.cov[:, Q, Q], self.m.mean)
@@ -194,7 +203,7 @@ class X:
 
         B = self.cov.dot(np.transpose(q_lm.l.mean)).dot(h.psii)
         v = np.transpose(q_lm.cov_lm).dot(h.psii_d)
-        #a = -B.dot(q_lm.m.mean)-self.cov.dot(v)
+        #a = -B.dot(q_lm.m.mean)-self.cov.dot(v)    # include covariance v
         a = -B.dot(q_lm.m.mean)
         self.mean = B.dot(y)+a[:, np.newaxis]
 
