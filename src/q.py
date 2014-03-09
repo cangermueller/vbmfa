@@ -19,10 +19,15 @@ class Pi:
 
     def update(self, h, q_s):
         self.alpha = h.alpha * h.m + np.sum(q_s.s, 1)
-        assert np.all(self.alpha > h.alpha*h.m)
+        if not np.all(self.alpha >= h.alpha*h.m):
+            pdb.set_trace()
+        assert np.all(self.alpha >= h.alpha*h.m)
 
     def __str__(self):
         return 'alpha: {:s}'.format(self.alpha.__str__())
+
+    def expectation(self):
+        return self.alpha / float(sum(self.alpha))
 
 
 class Nu:
@@ -233,7 +238,7 @@ class S:
         self.normalize()
 
     def normalize(self):
-        self.s /= np.sum(self.s, 0)
+        self.s /= np.maximum(np.sum(self.s, 0), 1e-10)
 
     def update(self, h, y, s, q_pi, q_lm, q_x):
         P = len(y)

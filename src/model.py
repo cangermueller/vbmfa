@@ -1,8 +1,10 @@
 import numpy as np
 import copy
+from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
+import pdb
 
 import q as qdist
-import pdb
 
 
 class Hyper:
@@ -73,6 +75,40 @@ class Model(object):
             self.q_x[s].init_rnd()
         self.q_s.init_rnd()
 
+    def init_complex(self, hard=True):
+        km = KMeans(self.S)
+        self.init_rnd()
+        y = np.transpose(self.y)
+        labels = km.fit_predict(y)
+        centroids = km.cluster_centers_
+        for s in range(self.S):
+            self.q_lm[s].m.mean = centroids[s]
+        if hard:
+            self.q_s.s = np.random.normal(1.0, 1e-3, size=self.q_s.s.size).reshape((self.S, -1))
+            for n in range(self.N):
+                self.q_s.s[labels[n], n] = 100
+            self.q_s.normalize()
+        else:
+            for s in range(self.S):
+                self.q_s.s[s] = np.linalg.norm(y - centroids[s], axis=1)
+            self.q_s.s = np.maximum(1 - self.q_s.s / np.max(self.q_s.s, axis=0), 0.01)
+            self.q_s.normalize()
+
+        pca = PCA(self.Q)
+        for s in range(self.S):
+            y = np.transpose(self.y[:, labels == s])
+            x = pca.fit_transform(y)
+            self.q_lm[s].l.mean = np.transpose(pca.components_)
+            self.q_x[s].mean[:, labels == s] = np.transpose(x)
+
+        self.update_nu()
+        self.update_s()
+        self.update_pi()
+
+
+
+
+
     def infer(self, maxit=10, eps=0.01, times=3, update=None):
         models = [copy.deepcopy(self)]
         mses = [self.mse()]
@@ -119,7 +155,7 @@ class Model(object):
         for s in range(self.S):
             self.q_s.update(self.h, self.y, s, self.q_pi, self.q_lm[s], self.q_x[s])
         self.q_s.s = np.exp(self.q_s.s)
-        self.q_s.s /= np.maximum(np.sum(self.q_s.s, 0), 1e-10)
+        self.q_s.normalize()
 
 
     def __str__(self):
