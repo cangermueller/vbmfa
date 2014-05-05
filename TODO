@@ -1,4 +1,6 @@
-* Find out why lambda does not exactly match vbmfa implementation
-* Transpose y, x
+* Implementation variational lower bound
+* Inference hyperparameters (psi, a, b)
+* Heuristic component birth/death
 * q_x.update: include covariance v?
-* remove asserts in q.py
+* Transpose y, x
+* Remove asserts in q.py

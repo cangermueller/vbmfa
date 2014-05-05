@@ -83,7 +83,7 @@ class Model(object):
         centroids = km.cluster_centers_
         for s in range(self.S):
             self.q_lm[s].m.mean = centroids[s]
-        if hard:
+        if hard == True:
             self.q_s.s = np.random.normal(1.0, 1e-3, size=self.q_s.s.size).reshape((self.S, -1))
             for n in range(self.N):
                 self.q_s.s[labels[n], n] = 100
@@ -102,7 +102,7 @@ class Model(object):
             self.q_x[s].mean[:, labels == s] = np.transpose(x)
 
         self.update_nu()
-        self.update_s()
+        #self.update_s()
         self.update_pi()
 
 
@@ -116,7 +116,7 @@ class Model(object):
         if update is None:
             update = self.update
         for i in range(maxit):
-            update(self)
+            update(self, i)
             models.append(copy.deepcopy(self))
             mses.append(self.mse())
             if (mses[-2]-mses[-1]) <= eps:
@@ -127,9 +127,7 @@ class Model(object):
                 break
         return [mses, models]
 
-    def update(self, model=None):
-        if model is None:
-            model = self
+    def update(self, model, it):
         model.update_x()
         model.update_lm()
         model.update_s()
