@@ -1,0 +1,47 @@
+\begin{appendices}
+
+\section{Expectations}
+\newcommand{\Xvx}{\bs{x}}
+\newcommand{\Xvy}{\bs{y}}
+
+\begin{align}
+  \label{eq:x2}
+  <\bs{x}^2>=<\bs{x}>^2+\Xvar[\bs{x}]
+\end{align}
+\begin{align}
+  \label{eq:xAx}
+  <\bs{x}^T A \bs{x}>=<\bs{x}>^T A <\bs{x}> + \Xtr[A \Xvar[\bs{x}]]
+\end{align}
+\begin{align}
+  \label{eq:xAy}
+  <\bs{x}^T A \bs{y}>
+  &=<\bs{x}>^T A <\bs{y}> + \Xtr[A \Xcov[\bs{y},\bs{x}]] \\
+  &=<\bs{x}>^T A <\bs{y}> + \Xvec[A]^T\Xvec[\Xcov[\bs{x},\bs{y}]]
+\end{align}
+\begin{align}
+  \label{eq:XAY}
+  <X A Y>&=<X>A<Y>+V \\
+  V_{ij}&=\Xtr[A\Xcov[Y_{:j},X_i]]=\Xvec[A]^T\Xvec[\Xcov[X_i,Y_{:j}]] \nonumber
+\end{align}
+\begin{align}
+  \label{eq:XAy}
+  <X A \bs{y}>&=<X>A<\bs{y}>+\bs{v} \\
+  \bs{v}_{i}&=\Xtr[A\Xcov[\bs{y},A_i]]=\Xvec[A]^T\Xvec[\Xcov[X_i,\bs{y}]] \nonumber
+\end{align}
+\begin{align}
+  \label{eq:xx}
+  <\bs{x}\bs{x}^T>=<\bs{x}><\bs{x}>^T+ \Xcov[\bs{x}]
+\end{align}
+If $M$ and $\Xvx$ are independent:
+\begin{align}
+  \label{eq:Mx}
+  <M \Xvx>=<M><\Xvx>
+\end{align}
+If $\Xvx$ and $\Xvy$ are independent:
+\begin{align}
+  \Xvar[\Xvx^T\Xvy]
+  &=\sum_i \Xvar[\Xvx_i \Xvy_i] \nonumber\\
+  &=\sum_i <\Xvx_i^2><\Xvy_i^2> - <\Xvx_i>^2<\Xvy_i>^2 \label{eq:vxy}
+\end{align}
+
+\end{appendices}

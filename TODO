@@ -1,1 +1,6 @@
+* Implementation variational lower bound
+* Inference hyperparameters (psi, a, b)
+* Heuristic component birth/death
+* q_x.update: include covariance v?
 * Transpose y, x
+* Remove asserts in q.py

@@ -9,7 +9,8 @@
 *.dvi
 *.fdb_latexmk
 *.fls
+*.toc
+.ipynb_checkpoints
 
 *.pyc
 *.rope*
-/notebooks/

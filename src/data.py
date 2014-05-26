@@ -8,8 +8,10 @@ def generate_nonzero(n):
 
 def generate_factor_cluster(P, Q=0, mean0=None, N=10, scale=1.0):
     y = np.empty((N, P))
-    l = generate_nonzero(P*Q).reshape(P, Q)
-    x = generate_nonzero(Q*N).reshape(Q, N)
+    P = int(P)
+    Q = int(Q)
+    l = generate_nonzero(int(P*Q)).reshape(P, Q)
+    x = generate_nonzero(int(Q*N)).reshape(Q, N)
     if mean0 is None:
         mean0 = np.zeros(P)
     mean = np.transpose(l.dot(x)) + mean0
