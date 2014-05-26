@@ -1,0 +1,13 @@
+\contentsline {section}{\numberline {1}Factor analysis}{1}{section.2}
+\contentsline {section}{\numberline {2}Mixture of factor analysers}{2}{section.8}
+\contentsline {section}{\numberline {3}Variational Bayesian mixture of factor analysers}{2}{section.11}
+\contentsline {subsection}{\numberline {3.1}Prior distribution}{2}{subsection.12}
+\contentsline {subsection}{\numberline {3.2}Joint distribution}{3}{subsection.20}
+\contentsline {section}{\numberline {4}Variational approximation}{3}{section.26}
+\contentsline {subsection}{\numberline {4.1}$Q(\boldsymbol {\pi })$}{4}{subsection.38}
+\contentsline {subsection}{\numberline {4.2}$Q(\nu ^s_q)$}{4}{subsection.41}
+\contentsline {subsection}{\numberline {4.3}$Q(\mathaccentV {tilde}07E{\boldsymbol {\Lambda }}^s_p)$}{5}{subsection.46}
+\contentsline {subsection}{\numberline {4.4}$Q(\boldsymbol {x}^n|s^n)$}{6}{subsection.59}
+\contentsline {subsection}{\numberline {4.5}$Q(s^n)$}{6}{subsection.70}
+\contentsline {section}{Appendices}{7}{section*.89}
+\contentsline {section}{\numberline {A}Expectations}{7}{Appendix.90}
