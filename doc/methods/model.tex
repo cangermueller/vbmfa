@@ -13,7 +13,7 @@
     citecolor=blue,
     filecolor=blue,
     menucolor=blue,
-    urlcolor=cyan, 
+    urlcolor=cyan,
 ]{hyperref}
 \usepackage{fullpage}
 \usepackage{amsmath}
@@ -24,6 +24,9 @@
 \usepackage{verbatim}
 \usepackage{hyperref}
 \usepackage[parfill]{parskip}
+\usepackage[toc,page]{appendix}
+
+\input{commands.tex}
 
 \author{Angermueller Christof}
 \date{\today}
@@ -31,186 +34,94 @@
 
 \begin{document}
 \maketitle
+\tableofcontents
 
-\newcommand{\bs}{\boldsymbol}
-\newcommand{\Xp}{\bs{\pi}}
-
-\newcommand{\Xn}{\bs{\nu}^s}
-\newcommand{\Xnq}{\nu^s_q}
-
-\newcommand{\Xl}{\Lambda^s}
-\newcommand{\Xlp}{\bs{\Lambda}^s_p}
-\newcommand{\Xlpq}{\Lambda^s_{pq}}
-\newcommand{\Xlm}{\overline{\Lambda}^s}
-\newcommand{\Xlmp}{\bar{\bs{\Lambda}}^s_p}
-\newcommand{\Xlvp}{\Sigma^{p,s}}
-\newcommand{\Xlvpi}{\Xlvp{}^{-1}}
-\newcommand{\Xlvpll}{\Xlvp_{\Lambda\Lambda}}
-\newcommand{\Xlvplu}{\Xlvp_{\Lambda\mu}}
-\newcommand{\Xlvpul}{\Xlvp_{\mu\Lambda}}
-\newcommand{\Xlvpuu}{\Xlvp_{\mu\mu}}
-\newcommand{\Xlvplli}{\Xlvpll{}^{-1}}
-\newcommand{\Xlvplui}{\Xlvplu{}^{-1}}
-\newcommand{\Xlvpuli}{\Xlvpul{}^{-1}}
-\newcommand{\Xlvpuui}{\Xlvpuu{}^{-1}}
-\newcommand{\Xlt}{\tilde{\Lambda}^s}
-\newcommand{\Xltb}{\tilde{{\bs{\Lambda}}}^s}
-\newcommand{\Xltp}{\tilde{\bs{\Lambda}}^s_p}
-\newcommand{\Xltpq}{\tilde{\Lambda}^s_{pq}}
-\newcommand{\Xltm}{\bar{\tilde{\Lambda}}^s}
-\newcommand{\Xltmp}{\bar{\tilde{\bs{\Lambda}}}^s_p}
-\newcommand{\Xltmpq}{\bar{\tilde{\Lambda}}^s_{pq}}
-\newcommand{\Xltvp}{\tilde{\Gamma}^{p,s}}
-\newcommand{\Xltvpi}{\Xltvp{}^{-1}}
-
-\newcommand{\Xu}{\bs{\mu}^s}
-\newcommand{\Xup}{\mu^s_p}
-\newcommand{\Xum}{\bar{\bs{\mu}}^s}
-\newcommand{\Xump}{\bar{\mu}^s_p}
-
-% Data
-\newcommand{\Xy}{\bs{y}^n}
-\newcommand{\Xs}{s^n}
-
-\newcommand{\Xx}{\bs{x}^n}
-\newcommand{\Xxm}{\overline{\bs{x}}^{n,s}}
-\newcommand{\Xxv}{\Sigma^s}
-\newcommand{\Xxt}{\tilde{\bs{x}}^n}
-\newcommand{\Xxtq}{\tilde{x}^n_q}
-\newcommand{\Xxtm}{\bar{\tilde{\bs{x}}}^n}
-\newcommand{\Xxtmq}{\bar{\tilde{x}}^n_q}
-\newcommand{\Xxtv}{\tilde{\Sigma}^s}
-
-% Hyperparameters
-\newcommand{\Xpsi}{\Psi}
-\newcommand{\Xpsii}{\Psi^{-1}}
-\newcommand{\Xha}{a^*}
-\newcommand{\Xhb}{b^*}
-\newcommand{\Xhal}{\alpha^*}
-\newcommand{\Xhm}{\bs{m}^*}
-\newcommand{\Xhms}{m^*_s}
-\newcommand{\Xhu}{\bs{\mu}^*}
-\newcommand{\Xhup}{\mu^*_p}
-\newcommand{\Xhn}{\bs{\nu}^*}
-\newcommand{\Xhnp}{\nu^*_p}
-
-% Operators
-\newcommand{\Xcov}{\operatorname{cov}}
-\newcommand{\Xvar}{\operatorname{var}}
-\newcommand{\Xtr}{\operatorname{tr}}
-\newcommand{\Xdiag}{\operatorname{diag}}
-\newcommand{\Xvec}{\operatorname{vec}}
-
-% Distributions
-\newcommand{\Xdn}{\mathcal{N}}
-\newcommand{\Xdm}{\mathcal{M}}
-\newcommand{\Xdg}{\operatorname{Ga}}
-\newcommand{\Xdd}{\mathcal{D}}
-
-
-
-
-\newcommand{\Xyg}{\bs{y}^{n,g}}
-\newcommand{\Xxg}{\bs{x}^{n,g}}
-\newcommand{\Xsg}{\bs{s}^{n,g}}
-
-\begin{comment}
 \section{Factor analysis}
-\begin{table}[h]
-  \begin{center}
-  \begin{tabular}{lll}
-    \toprule
-    Symbol & Dimension & Description \\ \hline
-    $\bs{y}$ & $P$ & Observed data vector \\
-    $\bs{x}$ & $Q$ & Latent factors \\
-    $\bs{\eta}$ & $P$ & Random Gaussian noise \\
-    $\Lambda$ & $P \times Q$ & Factor loading matrix \\
-    $\Lambda_{:q}$ & $P$ & Column loading matrix/principal component \\
-    $\bs{\mu}$ & $P$ & Mean $\bs{y}$ \\
-    $\bs{z}$ & $Q$ & Indicators factor analysers \\
-    $\Xp$ & $S$ & Mixing proportions \\
-    \bottomrule
-  \end{tabular}
-\end{center}
-\end{table}
-\begin{align}
-  P(\bs{x})=\mathcal{N}(\bs{x}|0,I_Q)
-\end{align}
-\begin{align}
-  P(\bs{\eta})=\mathcal{N}(\bs{\eta}|0,\Psi)
-\end{align}
-
-\subsection{Single factor analyser}
+The factor analysis model describes a $P$ dimensional data vector $\bs{y}$ as a linear function of a $Q$ dimensional vector of latent factors $\bs{x}$, where $Q<P$:
 \begin{align}
   \bs{y}=\Lambda\bs{x}+\bs{\mu}+\bs{\eta}
 \end{align}
+Here, $\Lambda$ is the $P\times Q$ factor loading matrix, $\bs{\mu}$ the offset, and $\bs{\nu}$ a normally distributed noise vector with mean zero and diagonal covariance matrix $\Xpsi$:
 \begin{align}
-  P(\bs{y}|\bs{x},\Lambda,\bs{\mu},\bs{\eta})=\mathcal{N}(\bs{y}|\Lambda\bs{x}+\bs{\mu},\Psi)
+  P(\bs{\eta}|\Psi)=\mathcal{N}(\bs{\eta}|0,\Psi) \qquad
+  \Psi=\begin{bmatrix}
+    \Psi_{11} & \cdots & 0 \\
+    \vdots & \Psi_{ii} & \vdots \\
+    0 & \cdots & \Psi_{PP}
+  \end{bmatrix}
+\end{align}
+The latent factors are assumed to be standard-normal distributed:
+\begin{align}
+  P(\bs{x})=\mathcal{N}(\bs{x}|0,I_Q)
+\end{align}
+Given the latent factors $\bs{x}$, $\bs{y}$ is hence normally distributed itself:
+\begin{align}
+  P(\bs{y}|\bs{x},\Lambda,\bs{\mu},\Psi)=\mathcal{N}(\bs{y}|\Lambda\bs{x}+\bs{\mu},\Psi)
+\end{align}
+Integrating out $\bs{x}$ gives:
+\begin{align}
+  P(\bs{y}|\Lambda,\bs{\mu},\Psi)=\mathcal{N}(\bs{y}|\bs{\mu}, \Lambda\Lambda^T+\Psi)
+\end{align}
+$\Lambda\Lambda^T+\Psi$ is therefore a low-rank approximation of the full covariance matrix of $\bs{y}$. The factor analysis model is identical to probabilistic Principle Component Analysis (PCA) if $\Psi=\sigma^2 I_P$. Factor analysis is therefore a generalisation for probabilistic PCA, which allows for non-isotropic noise. However, there is no longer a closed-form solution for the maximum likelihood estimator of $\Lambda$.
+
+\section{Mixture of factor analysers}
+In the mixture of factor analysers model, $\bs{y}$ can originates from one of $S$ independent factor analysers with different factor loading matrices $\Lambda=\left\{\Xl\right\}_{s=1}^S$ and offset vectors $\bs{\mu}=\left\{\Xu\right\}_{s=1}^S$:
+\begin{align}
+  P(\bs{y}|\bs{x},\bs{s},\Xp,\Lambda,\bs{\mu},\Psi)=\sum_s P(s|\Xp) P(\bs{y}|\bs{x},\Xl,\Xu,\Psi)
+\end{align}
+$\bs{s}$ indicates the true factor analyser, which is modelled as a single draw from a multinomial distribution with mixture-coefficients $\Xp$:
+\begin{align}
+  P(\bs{s}|\Xp)=\Xdm(\bs{s}|1,\Xp)
+\end{align}
+The model parameters $\left\{\Xp,\Lambda,\bs{\mu}\right\}$ can estimated by maximum likelihood or Bayesian inference. Maximum likelihood estimation via Expectation Maximisation (EM) is fast, but subject to overfitting since it does not take into account model complexity. Bayesian inference prevents overfitting by imposing a prior on the model parameters, but is often intractable. To make inference tractable, approximate Bayesian inference methods can be used. The following sections will explain one of these methods, Variational Inferece, which allows for tractable inference for a Bayesian mixture of factor analysers.
+
+\section{Variational Bayesian mixture of factor analysers}
+\subsection{Prior distribution}
+Bayesian inference requires a prior distribution $P(\theta)$ over the model parameters $\theta=\left\{\Xp,\Lambda,\bs{\mu}\right\}$, which can be chosen as follows.
+
+The prior over the mixture proportions $\bs{\pi}$ is a symmetric Dirichlet distribution with counts $\Xhal\Xhm$:
+\begin{align}
+  P(\Xp|\Xhal\Xhm)=\Xdd(\Xp|\Xhal\Xhm),
+\end{align}
+The prior strengths $\Xhal$ corresponds to the total number of prior counts, which are equally distributed over all factor analysers by setting $\Xhm=[1/S,\dots,1/S]$.
+
+Each factor loading matrix $\Xl$ factorizes by columns $q$, which are normally distributed with mean zero and diagonal covariance matrix ${\Xnq}^{-1}I_P$. This is equivalent to saying $\Xl$ factorizes by rows $p$, which are normally distributed with mean zero and diagonal covariance matrix $\Xdiag[\Xn]^{-1}$.
+\begin{align}
+  P(\Lambda|\Xn)&=\prod_{s,q}\Xdn(\Xlq|0,{\Xnq}^{-1}I_P) \\
+                &=\prod_{s,p}\Xdn(\Xlp|0,\Xdiag[\Xn]^{-1})
 \end{align}
 
-\subsection{Mixture factor analysers}
+The factor loading rates $\Xn$ are independently Gamma distributes with hyperparameter $\Xha$ and $\Xhb$:
 \begin{align}
-  \bs{y}=\bs{\eta}+\sum_{s=1}^S(\Lambda^s\bs{x}+\bs{\mu}) P(z_s|\bs{\pi})
+  P(\bs{\nu}|\Xha,\Xhb)=\prod_{s,q}\Xdg(\Xnq|\Xha,\Xhb)
 \end{align}
+
+The mean vector $\Xu$ is normally distributed with mean $\Xhu$ and diagonal covariance $\Xdiag[\Xhn]^{-1}$:
 \begin{align}
-  P(\bs{y}|\bs{x},\Lambda,\bs{\mu},\bs{\eta})=\sum_{s=1}^S\mathcal{N}(\bs{y}|\Lambda\bs{x}+\bs{\mu},\Psi)P(z_s|\bs{\pi})
+  P(\bs{\mu}|\Xhu,\Xhn)=\prod_s\Xdn(\Xu|\Xhu,\Xdiag[\Xhn]^{-1})
 \end{align}
-\newpage
 
-\end{comment}
+In summary, the model parameters $\theta$ are
+\begin{align}
+  \theta=\left\{\Xp,\bs{\nu},\Lambda,\bs{\mu}\right\},
+\end{align}
+and the hyperparameters $\Theta$ are
+\begin{align}
+  \Theta=\left\{\Xpsi,\Xhal\Xhm,\Xha,\Xhb,\Xhu,\Xhn\right\}.
+\end{align}
 
-\section{Notations}
-\begin{table}[h]
-  \begin{center}
-  \begin{tabular}{ll}
-    \toprule
-    Symbol & Description \\ \hline
-    $P$ & Dimensionality data \\
-    $Q$ & Number of factors/components \\
-    $S$ & Number of factor analysers \\
-    $N$ & Number of Individuals  \\
-    $G$ & Number of genes \\
-    \bottomrule
-  \end{tabular}
-  \caption{Indices.}
-  \end{center}
-\end{table}
-\begin{table}[h]
-  \begin{center}
-  \begin{tabular}{lll}
-    \toprule
-    Symbol & Dimension & Description \\ \hline
-    $\Xp$ & $S$ & Mixing proportions \\
-    $\Xn$ & $Q$ & Precisions components factor analyser $s$ \\
-    $\Xl$ & $P \times Q$ & Loading matrix factor analyser $s$ \\
-    $\Xu$ & $P$ & Offset factor analyser $s$ \\
-    $\Xyg$ & $P$ & Counts sample $n$ gene $g$ \\
-    $\Xxg$ & $Q$ & Factors sample $n$ gene $g$ \\
-    $\Xsg$ & $Q$ & Indicators factor analysers sample $n$ gene $g$ \\
-    \bottomrule
-  \end{tabular}
-  \caption{Random variables.}
-\end{center}
-\end{table}
-\begin{table}[h]
-  \begin{center}
-  \begin{tabular}{lll}
-    \toprule
-    Symbol & Dimension & Description \\ \hline
-    $\Xha$ & $1$ & Shape gamma distribution \\
-    $\Xhb$ & $1$ & Rate gamma distribution \\
-    $\Xhal$ & $1$ & Strength Dirichlet prior \\
-    $\Xhm$ & $S$ & Prior mixing proportions \\
-    $\Xhu$ & $P$ & Offset mean \\
-    $\Xhn$ & $P$ & Offset precision \\
-    $\Xpsi$ & $P \times P$ & Noise matrix \\
-    \bottomrule
-  \end{tabular}
-  \caption{Hyperparameters.}
-\end{center}
-\end{table}
+\subsection{Joint distribution}
+The data $D$ includes the observed variables $\Xy$, as well as the latent variables $\Xx$ and $\Xs$ for $n=1,\dots,N$ independent samples:
+\begin{align}
+  D=\left\{\Xy,\Xx,\Xs\right\}_{n=1}^N
+\end{align}
+The joint distribution of model parameters $\theta$ and data $D$ factorises as follows:
+\begin{align}
+  P(\theta,D|\Theta)&=P(\theta|\Theta)P(D|\theta,\Theta) \\
+  &=P(\Xp|\Xhal\Xhm)P(\bs{\nu}|\Xha,\Xhb)P(\Lambda|\bs{\nu})P(\bs{\mu}|\Xhu,\Xhn) \\
+  &\quad \prod_n P(\Xs|\Xp)P(\Xx)P(\Xy|\Xx,\Xl,\Xu,\Xpsi)
+\end{align}
 
-\section{Model}
 \begin{figure}[h]
   \begin{center}
     \begin{tikzpicture}
@@ -218,11 +129,10 @@
       \tikzstyle{sPlate}=[rectangle, dashed, draw=black, thick, align=flush right];
       \tikzstyle{sHyper}=[rectangle, draw=black, thick, minimum size=.8cm];
       \tikzstyle{sDep}=[->, thick];
-      \node[sPlate, text width=5cm, text height=4.5cm] (Pn) {$n=1,...,N$};
-      \node[sPlate, text width=4.5cm, text height=3.5cm, below=.5cm of Pn.north] (Pg) {$g=1,...,G$};
-      \node[sVar, below left=.75cm and .5cm of Pg.north, fill=gray!50] (Y) {$\Xyg$};
-      \node[sVar, right=1cm of Y] (Z) {$\Xsg$};
-      \node[sVar, below=.5cm of Z] (X) {$\Xxg$};
+      \node[sPlate, text width=5cm, text height=3cm] (Pn) {$n=1,...,N$};
+      \node[sVar, below left=.75cm and .5cm of Pn.north, fill=gray!50] (Y) {$\Xy$};
+      \node[sVar, right=1cm of Y] (Z) {$\Xs$};
+      \node[sVar, below=.5cm of Z] (X) {$\Xx$};
       \node[sVar, right=1.5cm of Z] (Pi) {$\Xp$};
       \node[sHyper, left=2cm of Y] (Psi) {$\Xpsi$};
       \node[sHyper, right=1cm of Pi] (Alpha) {$\alpha^*\bs{m}^*$};
@@ -247,53 +157,22 @@
     \caption{Graphical model}
   \end{center}
 \end{figure}
-\begin{align}
-  P(\Xp,\bs{\nu},\Lambda,\bs{\mu},\bs{s},\bs{x},\bs{y})
-  &=P(\Xp|\Xhal\Xhm)\prod_{s,q}P(\Xnq|\Xha,\Xhb)\prod_{s,p}P(\Xlp|\Xn)\prod_{s}P(\Xu|\Xhu,\Xhn) \\
-  &\quad \prod_{n,g}P(\Xxg)\sum_sP(\Xsg|\Xp)P(\Xyg|\Xsg,\Xxg,\Xl,\Xu,\Xpsi)
-\end{align}
-
-\subsection{Conditional probability distributions}
-\subsubsection{Parameters}
-\begin{align}
-  \Theta=\left\{\bs{\pi},\bs{\nu},\Lambda,\bs{\mu}\right\}
-\end{align}
-\begin{align}
-  P(\Xp|\Xhal\Xhm)=\Xdd(\Xp|\Xhal\Xhm)
-\end{align}
-\begin{align}
-  P(\bs{\nu}|\Xha,\Xhb)=\prod_{s,q}\Xdg(\Xnq|\Xha,\Xhb)
-\end{align}
-\begin{align}
-  P(\Lambda|\Xn)=\prod_{s,p}\Xdn(\Xlp|0,\Xdiag[\Xn]^{-1})
-\end{align}
-\begin{align}
-  P(\bs{\mu}|\Xhu,\Xhn)=\prod_s\Xdn(\Xu|\Xhu,\Xdiag[\Xhn]^{-1})
-\end{align}
-\subsubsection{Data}
-\begin{align}
-  D=\left\{\bs{y},\bs{x},\bs{s}\right\}
-\end{align}
-\begin{align}
-  P(\Xx)=\Xdn(\Xx|0,I_{Q})
-\end{align}
-\begin{align}
-  P(\Xs|\Xp)=\Xdm(\Xs|\Xp)
-\end{align}
-\begin{align}
-  P(\Xy|\Xx,\Xs,\Lambda,\Xu,\Xpsi)=\Xdn(\Xy|\Xl\Xx+\Xu,\Xpsi)
-\end{align}
 
 \section{Variational approximation}
 The goal is to approximate the following posterior distribution:
 \begin{align}
-  P(\bs{\pi},\bs{\nu},\Lambda,\bs{\mu},\bs{x},\bs{s}|\bs{y})=Q(\bs{\pi},\bs{\nu},\Lambda,\bs{\mu},\bs{x},\bs{s})
+  P(\bs{\pi},\bs{\nu},\Lambda,\bs{\mu},\bs{x},\bs{s}|\bs{y}) \approx Q(\bs{\pi},\bs{\nu},\Lambda,\bs{\mu},\bs{x},\bs{s})
 \end{align}
-The following factorization is assumed:
+To render tractable inference and closed for solutions for the approximating factors $Q(\cdot)$, the following factorisation is chosen:
 \begin{align}
   Q(\bs{\pi},\bs{\nu},\Lambda,\bs{\mu},\bs{x},\bs{s})=Q(\bs{\pi},\bs{\nu})Q(\Lambda,\bs{\mu})Q(\bs{x},\bs{s})
 \end{align}
-Which further factorizes into:
+The choice of this factorisation implies two approximations:
+\begin{enumerate}
+  \item Parameters $\theta$ and latent variables $\left\{\bs{x},\bs{s}\right\}$ are independent.
+  \item $\left\{\Lambda,\bs{\mu}\right\}$ are independent of the remaining parameters.
+\end{enumerate}
+Maximising the variational lower bound further factorises $Q$:
 \begin{align}
   Q(\bs{\pi},\bs{\nu})Q(\Lambda,\bs{\mu})Q(\bs{x},\bs{s})=Q(\bs{\pi})\prod_s\prod_q Q(\nu_q^s)\prod_s\prod_p Q(\tilde{\Lambda}^s_p) \prod_n Q(\Xx|\Xs)Q(\Xs)
 \end{align}
@@ -379,8 +258,8 @@ The row covariance matrix is $P\times(Q+1)$ and decomposes into $4$ blocks:
 $\Xlvpll$ is $Q\times Q$:
 \begin{align}
   \Xlvplli
-  &=\Xdiag[<\Xn>]+\Xpsii\sum_n Q(\Xs)<\Xx{\Xx}^T> \\
-  &=\Xdiag[\frac{a}{b^s_1},...,\frac{a}{b^s_Q}]+\Xpsii\sum_n Q(\Xs)\left(\Xxm{\Xxm}^T+\Xxv\right) \label{eq:ulvppli}
+  &=\Xdiag[<\Xn>]+\Xpsii_{pp}\sum_n Q(\Xs)<\Xx{\Xx}^T> \\
+  &=\Xdiag[\frac{a}{b^s_1},...,\frac{a}{b^s_Q}]+\Xpsii_{pp}\sum_n Q(\Xs)\left(\Xxm{\Xxm}^T+\Xxv\right) \label{eq:ulvppli}
 \end{align}
 Eq.~\ref{eq:ulvppli} follows from eq.~\ref{eq:xx}. \\
 $\Xlvplui$ is $Q\times 1$:
@@ -484,50 +363,6 @@ Eq.~\ref{eq:usef} can now be resubsituted into eq.~\ref{eq:usqe}:
   &\quad-\frac{1}{2}\sum_p\Xpsii_{pp}\left(\sum_q\Xltmpq{}^2\Xxtv_{qq}+\Xxtmq{}^2\Xltvp_{qq}+\Xltvp_{qq}\Xxtv_{qq}\right)
 \end{align}
 
-\section{Equations}
-\newcommand{\Xvx}{\bs{x}}
-\newcommand{\Xvy}{\bs{y}}
 
-\begin{align}
-  \label{eq:x2}
-  <\bs{x}^2>=<\bs{x}>^2+\Xvar[\bs{x}]
-\end{align}
-\begin{align}
-  \label{eq:xAx}
-  <\bs{x}^T A \bs{x}>=<\bs{x}>^T A <\bs{x}> + \Xtr[A \Xvar[\bs{x}]]
-\end{align}
-\begin{align}
-  \label{eq:xAy}
-  <\bs{x}^T A \bs{y}>
-  &=<\bs{x}>^T A <\bs{y}> + \Xtr[A \Xcov[\bs{y},\bs{x}]] \\
-  &=<\bs{x}>^T A <\bs{y}> + \Xvec[A]^T\Xvec[\Xcov[\bs{x},\bs{y}]]
-\end{align}
-\begin{align}
-  \label{eq:XAY}
-  <X A Y>&=<X>A<Y>+V \\
-  V_{ij}&=\Xtr[A\Xcov[Y_{:j},X_i]]=\Xvec[A]^T\Xvec[\Xcov[X_i,Y_{:j}]] \nonumber
-\end{align}
-\begin{align}
-  \label{eq:XAy}
-  <X A \bs{y}>&=<X>A<\bs{y}>+\bs{v} \\
-  \bs{v}_{i}&=\Xtr[A\Xcov[\bs{y},A_i]]=\Xvec[A]^T\Xvec[\Xcov[X_i,\bs{y}]] \nonumber
-\end{align}
-\begin{align}
-  \label{eq:xx}
-  <\bs{x}\bs{x}^T>=<\bs{x}><\bs{x}>^T+ \Xcov[\bs{x}]
-\end{align}
-If $M$ and $\Xvx$ are independent:
-\begin{align}
-  \label{eq:Mx}
-  <M \Xvx>=<M><\Xvx>
-\end{align}
-If $\Xvx$ and $\Xvy$ are independent:
-\begin{align}
-  \Xvar[\Xvx^T\Xvy]
-  &=\sum_i \Xvar[\Xvx_i \Xvy_i] \nonumber\\
-  &=\sum_i <\Xvx_i^2><\Xvy_i^2> - <\Xvx_i>^2<\Xvy_i>^2 \label{eq:vxy}
-\end{align}
-
-
-
+\input{appendix.tex}
 \end{document}

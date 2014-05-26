@@ -9,6 +9,7 @@
 *.dvi
 *.fdb_latexmk
 *.fls
+*.toc
 
 *.pyc
 *.rope*
