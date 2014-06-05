@@ -26,7 +26,8 @@ class Hyper:
 
     def init_non_rnd(self):
         self.alpha = 1.0
-        self.m = np.ones(self.S)
+        self.m = np.empty(self.S)
+        self.m.fill(self.S**-1)
         self.a = 1.0
         self.b = 1.0
         self.mu = np.zeros(self.P)
@@ -105,10 +106,6 @@ class Model(object):
         #self.update_s()
         self.update_pi()
 
-
-
-
-
     def infer(self, maxit=10, eps=0.01, times=3, update=None):
         models = [copy.deepcopy(self)]
         mses = [self.mse()]
@@ -120,7 +117,7 @@ class Model(object):
             models.append(copy.deepcopy(self))
             mses.append(self.mse())
             if (mses[-2]-mses[-1]) <= eps:
-                c +=1
+                c += 1
             else:
                 c = 0
             if c == times:
@@ -152,8 +149,9 @@ class Model(object):
     def update_s(self):
         for s in range(self.S):
             self.q_s.update(self.h, self.y, s, self.q_pi, self.q_lm[s], self.q_x[s])
-        self.q_s.s = np.exp(self.q_s.s)
+        self.q_s.s = np.maximum(np.exp(self.q_s.s), 1e-10)
         self.q_s.normalize()
+        assert(np.all(np.sum(self.q_s.s, 0) == 1.0))
 
 
     def __str__(self):

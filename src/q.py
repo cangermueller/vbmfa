@@ -147,7 +147,7 @@ class LambdaMu:
                 for n in range(q_x.N):
                     m += q_s.s[self.s, n] * y[:,n][:, np.newaxis].dot(q_x.mean[:, n][np.newaxis, :]).dot(self.l.cov[p])
                 lm[p] = h.psii.dot(m)[p]
-            nt.assert_almost_equal(lm, self.l.mean)
+            nt.assert_almost_equal(lm, self.l.mean, decimal=7)
 
             # m.mean
             self.m.mean = np.multiply(h.psii_d, y.dot(q_s.s[self.s, :]))+np.multiply(h.mu, h.nu)
@@ -239,6 +239,7 @@ class S:
 
     def normalize(self):
         self.s /= np.maximum(np.sum(self.s, 0), 1e-10)
+        assert(np.all(np.sum(self.s, 0) == 1.0))
 
     def update(self, h, y, s, q_pi, q_lm, q_x):
         P = len(y)
