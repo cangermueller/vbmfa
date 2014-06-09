@@ -37,6 +37,11 @@ class TestModel(unittest.TestCase):
         self.assertEqual(len(m.q_nu), S)
         self.assertEqual(len(m.q_lm), S)
         self.assertEqual(len(m.q_x), S)
+        for s in range(S):
+            assert(m.q_l[s] == m.q_lm[s].l)
+            assert(m.q_m[s] == m.q_lm[s].m)
+            m.q_m[s].mean = np.random.rand(Q, N)
+            assert(np.all(m.q_m[s].mean == m.q_lm[s].m.mean))
 
     def test_predict_s(self):
         P = 3
@@ -94,11 +99,13 @@ class TestModel(unittest.TestCase):
         m.q_pi.update(h, m.q_s)
         self.assertTrue((m.q_pi.alpha >= h.alpha*h.m).all())
         for s in range(S):
-            m.q_nu[s].update(h, m.q_lm[s])
+            m.q_nu[s].update(h, m.q_l[s])
             self.assertEqual(m.q_nu[s].a, h.a+0.5*P)
             self.assertTrue((m.q_nu[s].b > h.b).all())
         for s in range(S):
-            m.q_lm[s].update(h, m.q_nu[s], m.q_x[s], m.q_s, y)
+            m.q_lm[s].update(h, y, m.q_nu[s], m.q_s, m.q_x[s])
+            m.q_l[s].update(h, y, m.q_m[s], m.q_nu[s], m.q_s, m.q_x[s])
+            m.q_m[s].update(h, y, m.q_l[s], m.q_s, m.q_x[s])
             self.assertTrue(m.q_lm[s].m.pre.min() >= 0.0)
             for p in range(P):
                 self.assertTrue(self.is_pd(m.q_lm[s].l.pre[p]))
@@ -107,8 +114,6 @@ class TestModel(unittest.TestCase):
                 self.assertTrue(self.is_pd(m.q_lm[s].cov[p]))
         for s in range(S):
             m.q_x[s].update(h, m.q_lm[s], y)
-            # print np.diagonal(m.q_x[s].cov), np.min(m.q_x[s].cov), np.max(m.q_x[s].cov)
-            # print m.q_x[s].mean
         for s in range(S):
             m.q_s.update(h, y, s, m.q_pi, m.q_lm[s], m.q_x[s])
         m.q_s.s = np.maximum(1e-5, np.exp(m.q_s.s))

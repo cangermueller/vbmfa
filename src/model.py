@@ -12,19 +12,9 @@ class Hyper:
         self.P = P
         self.Q = P if Q is None else Q
         self.S = S
-        self.init_non_rnd()
+        self.init()
 
-    def init_rnd(self):
-        self.alpha = np.random.normal(loc=1.0, scale=1e-4)
-        self.m = np.random.normal(loc=1.0, scale=1e-4, size=self.S)
-        self.a = np.random.normal(loc=1.0, scale=1e-4)
-        self.b = np.random.normal(loc=1.0, scale=1e-4)
-        self.mu = np.random.normal(loc=0.0, scale=1.0, size=self.P)
-        self.nu = np.random.normal(loc=1.0, scale=1e-4, size=self.P)
-        self.psi = np.diag(np.random.normal(loc=1.0, scale=1e-4, size=self.P))
-        self.update_psi()
-
-    def init_non_rnd(self):
+    def init(self):
         self.alpha = 1.0
         self.m = np.empty(self.S)
         self.m.fill(self.S**-1)
@@ -32,20 +22,21 @@ class Hyper:
         self.b = 1.0
         self.mu = np.zeros(self.P)
         self.nu = np.ones(self.P)
-        self.psi = np.eye(self.P)
-        self.update_psi()
+        self.psi_d = np.ones(self.P)
+        self.init_psi()
 
-    def update_psi(self):
-        self.psii = np.linalg.inv(self.psi)
-        self.psii_d = np.diagonal(self.psii)
+    def init_psi(self):
+        self.psii_d = self.psi_d**-1
+        self.psi = np.diag(self.psi_d)
+        self.psii = np.diag(self.psii_d)
 
     def __str__(self):
         st = ''
         st += 'alpha: {:s}'.format(self.alpha.__str__())
         st += '\na: {:f}, b: {:f}'.format(self.a, self.b)
-        st += '\nm: {:s}'.format(self.m.__str__())
+        st += '\nmu: {:s}'.format(self.mu.__str__())
         st += '\nnu: {:s}'.format(self.nu.__str__())
-        st += '\npsi:\n{:s}'.format(self.psi.__str__())
+        st += '\npsi: {:s}'.format(self.psi_d.__str__())
         return st
 
 
@@ -64,6 +55,8 @@ class Model(object):
         self.q_pi = qdist.Pi(self.S)
         self.q_nu = [qdist.Nu(self.P, self.Q) for s in range(self.S)]
         self.q_lm = [qdist.LambdaMu(self.P, self.Q, s) for s in range(self.S)]
+        self.q_m = [self.q_lm[s].m for s in range(self.S)]
+        self.q_l = [self.q_lm[s].l for s in range(self.S)]
         self.q_x = [qdist.X(self.Q, self.N) for s in range(self.S)]
         self.q_s = qdist.S(self.S, self.N)
         self.init_rnd()
@@ -136,11 +129,21 @@ class Model(object):
 
     def update_nu(self):
         for s in range(self.S):
-            self.q_nu[s].update(self.h, self.q_lm[s])
+            self.q_nu[s].update(self.h, self.q_l[s])
 
-    def update_lm(self, update_pre=True, update_mean=True):
+    def update_m(self):
         for s in range(self.S):
-            self.q_lm[s].update(self.h, self.q_nu[s], self.q_x[s], self.q_s, self.y, update_pre=update_pre, update_mean=update_mean)
+            self.q_m[s].update(self.h, self.y, self.q_l[s], self.q_s, self.q_x[s])
+            self.q_lm[s].build_cov()
+
+    def update_l(self):
+        for s in range(self.S):
+            self.q_l[s].update(self.h, self.y, self.q_m[s], self.q_nu[s], self.q_s, self.q_x[s])
+            self.q_lm[s].build_cov()
+
+    def update_lm(self, **kwargs):
+        for s in range(self.S):
+            self.q_lm[s].update(self.h, self.y, self.q_nu[s], self.q_s, self.q_x[s], **kwargs)
 
     def update_x(self):
         for s in range(self.S):
@@ -149,9 +152,7 @@ class Model(object):
     def update_s(self):
         for s in range(self.S):
             self.q_s.update(self.h, self.y, s, self.q_pi, self.q_lm[s], self.q_x[s])
-        self.q_s.s = np.maximum(np.exp(self.q_s.s), 1e-10)
         self.q_s.normalize()
-        assert(np.all(np.sum(self.q_s.s, 0) == 1.0))
 
 
     def __str__(self):
@@ -166,7 +167,7 @@ class Model(object):
         return st
 
     def predict_y_s(self, s):
-        return self.q_lm[s].l.mean.dot(self.q_x[s].mean)+self.q_lm[s].m.mean[:, np.newaxis]
+        return self.q_l[s].mean.dot(self.q_x[s].mean)+self.q_m[s].mean[:, np.newaxis]
 
     def predict_y(self, ss=None):
         if ss is None:

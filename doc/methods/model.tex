@@ -212,7 +212,7 @@ The factors are distributed as follows:
 \begin{align}
 a&=a^*+\frac{P}{2} \\
 b_q^s&=b^*+\frac{1}{2}\sum_p<\Xlpq{}^2> \\
-&=b+\frac{1}{2}\sum_p\left(\Xltmpq{}^2 + \Xltvp_{qq}\right)
+&=b^*+\frac{1}{2}\sum_p\left(\Xltmpq{}^2 + \Xltvp_{qq}\right)
 \end{align}
 Here, we solved $<\Xltpq{}^2>$ by eq.~\ref{eq:x2}.
 
@@ -302,34 +302,34 @@ $<{\Xl}^T \Xpsii \Xl>$ is solved by eq. $\ref{eq:XAY}$ and $\Xcov[\Xl_{pi},\Xl_{
 \end{align}
 
 \subsection{$Q(\Xs)$}
+\newcommand{\Xsvv}{\bs{\sigma}^{s,n}}
+\newcommand{\Xsvm}{C_{\Xlt}}
 \begin{align}
   \ln Q(\Xs)
   &=\psi(\alpha m_s)+\frac{1}{2}\ln |\Xxv|+<\ln P(\Xy|\Xx,\Xs,\Xl,\Psi)> \label{eq:usqe} \\
   &=\psi(\alpha m_s)+\frac{1}{2}\ln |\Xxv| \nonumber \\
-  &\quad-\frac{1}{2}\Xtr[\Xpsii(\Xy-\Xltm\Xxtm)(\Xy-\Xltm\Xxtm)^T] \nonumber \\
-  &\quad-\frac{1}{2}\sum_p\Xpsii_{pp}\left(\sum_q\Xltmpq{}^2\Xxtv_{qq}+\Xxtmq{}^2\Xltvp_{qq}+\Xltvp_{qq}\Xxtv_{qq}\right)
+  &\quad-\frac{1}{2}(\Xy-\Xltm\Xxtm)^T\Xpsii(\Xy-\Xltm\Xxtm) \nonumber \\
+  &\quad-\frac{1}{2}\Xdiag[\Xpsii]^T \Xsvv
 \end{align}
-$\Xxt$ is defined as:
+Here, the following definitions were used:
 \begin{align}
-  \Xxt=
-  \begin{bmatrix}
-    \Xx \\
-    1
+  \Xxt &= [\Xx \quad 1]^T \\
+  \Xsvv &= (\Xltm{}^2+\Xsvm)\Xdiag[\Xxtv]+ \Xsvm \Xxtm{}^2 \\
+  \Xsvm &= \begin{bmatrix}
+    \Xdiag[\tilde{\Gamma}^{1,s}]^T \\
+    \cdots \\
+    \Xdiag[\tilde{\Gamma}^{P,s}]^T \\
   \end{bmatrix}
 \end{align}
 The expectation in eq.~\ref{eq:usqe} is:
 \begin{align}
-  <\ln P(\Xy|\Xx,\Xs,\Xl,\Psi)>=-\frac{1}{2}\Xtr[\Xpsii<(\Xy-\Xlt\Xxt)(\Xy-\Xlt\Xxt)^T>]+\text{const} \label{eq:usle}
+  <\ln P(\Xy|\Xx,\Xs,\Xl,\Psi)> \\
+  &=-\frac{1}{2}<(\Xy-\Xlt\Xxt)^T\Xpsii(\Xy-\Xlt\Xxt)> + \text{const} \\
+  &=-\frac{1}{2}(\Xy-\Xltm\Xxtm)^T\Xpsii(\Xy-\Xltm\Xxtm)
+  -\frac{1}{2}\Xtr[\Xpsii \Xvar[\Xlt\Xxt]] + \text{const}
 \end{align}
 \begin{align}
-  <(\Xy-\Xlt\Xxt)(\Xy-\Xlt\Xxt)^T>
-  &=(\Xy-\Xltm\Xxtm)(\Xy-\Xltm\Xxtm)^T+\Xcov[\Xy-\Xlt\Xxt]] \label{eq:use2} \\
-  &=(\Xy-\Xltm\Xxtm)(\Xy-\Xltm\Xxtm)^T+V \label{eq:use}
-\end{align}
-Eq.~\ref{eq:use2} follows from eq.~\ref{eq:xx}. \\
-$V$ is diagonal, since rows are indepenent:
-\begin{align}
-  V=
+  \Xvar[\Xlt\Xxt]=
   \begin{bmatrix}
     \Xvar[\Xltb_1{}^T\Xxt] & \cdots & 0 \\
     \cdots & \Xvar[\Xltb_p{}^T\Xxt] & \cdots \\
@@ -342,27 +342,17 @@ $V$ is diagonal, since rows are indepenent:
   &=\sum_q<\Xltpq{}^2><\Xxtq{}^2>-<\Xltpq>^2<\Xxtq>^2 \label{eq:usv1} \\
   &=\sum_q(<\Xltpq>^2+\Xvar[\Xltpq])(<\Xxtq>^2+\Xvar[\Xxtq])-<\Xltpq>^2<\Xxtq>^2 \label{eq:usv2} \\
   &=\sum_q<\Xltpq>^2\Xvar[\Xxtq]+<\Xxtq>^2\Xvar[\Xltpq]+\Xvar[\Xltpq]\Xvar[\Xxtq] \\
-  &=\sum_q\Xltmpq{}^2\Xxtv_{qq}+\Xxtmq{}^2\Xltvp_{qq}+\Xltvp_{qq}\Xxtv_{qq}
+  &=\sum_q\Xltmpq{}^2\Xxtv_{qq}+\Xxtmq{}^2\Xltvp_{qq}+\Xltvp_{qq}\Xxtv_{qq} \\
+  &=\sum_q(\Xltmpq{}^2+\Xltvp_{qq})\Xxtv_{qq}+\Xxtmq{}^2\Xltvp_{qq}
 \end{align}
-Eq.~\ref{eq:usv1} follows from eq.~\ref{eq:vxy}, eq.~\ref{eq:usv2} from eq.~\ref{eq:x2}. \\
-Eq.~\ref{eq:use} can now be resubsituted into eq.~\ref{eq:usle}:
 \begin{align}
-  <\ln P(\Xy|\Xx,\Xs,\Xl,\Psi)>
-  &=-\frac{1}{2}\Xtr[\Xpsii <(\Xy-\Xlt\Xxt)(\Xy-\Xlt\Xxt)^T>] \\
-  &=-\frac{1}{2}\Xtr[\Xpsii \left((\Xy-\Xltm\Xxtm)(\Xy-\Xltm\Xxtm)^T+V\right)] \\
-  &=-\frac{1}{2}\Xtr[\Xpsii(\Xy-\Xltm\Xxtm)(\Xy-\Xltm\Xxtm)^T + \Xpsii V] \\
-  &=-\frac{1}{2}\Xtr[\Xpsii(\Xy-\Xltm\Xxtm)(\Xy-\Xltm\Xxtm)^T] \nonumber \\
-  &\quad-\frac{1}{2}\sum_p\Xpsii_{pp}\left(\sum_q\Xltmpq{}^2\Xxtv_{qq}+\Xxtmq{}^2\Xltvp_{qq}+\Xltvp_{qq}\Xxtv_{qq}\right) \label{eq:usef}
+  \Xvar[\Xlt\Xxt] &= \Xdiag[\Xsvv]
 \end{align}
-Eq.~\ref{eq:usef} can now be resubsituted into eq.~\ref{eq:usqe}:
 \begin{align}
-  \ln Q(\Xs)
-  &=\psi(\alpha m_s)+\frac{1}{2}\ln |\Xxv|+<\ln P(\Xy|\Xx,\Xs,\Xl,\Psi)> \\
-  &=\psi(\alpha m_s)+\frac{1}{2}\ln |\Xxv| \nonumber \\
-  &\quad-\frac{1}{2}\Xtr[\Xpsii(\Xy-\Xltm\Xxtm)(\Xy-\Xltm\Xxtm)^T] \nonumber \\
-  &\quad-\frac{1}{2}\sum_p\Xpsii_{pp}\left(\sum_q\Xltmpq{}^2\Xxtv_{qq}+\Xxtmq{}^2\Xltvp_{qq}+\Xltvp_{qq}\Xxtv_{qq}\right)
+  \Xtr[\Xpsii \Xvar[\Xlt \Xx]] = \Xdiag[\Xpsii]^T \Xsvv \label{eq:usv3}
 \end{align}
 
 
 \input{appendix.tex}
+
 \end{document}
