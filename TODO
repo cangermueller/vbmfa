@@ -1,6 +1,25 @@
+* Lower/upper case
+  * CONSTANT
+  * var_iable
+  * fun_ction
+  * _private_object
+  * name:
+    q_pi
+    q_nu (s)
+    q_lambda (s)
+    q_mu (s)
+    q_x (s)
+    q_s
+* allow for component death/birth
+* arguments __init__
+* Code indentation
+* np.* => .*
 * Implementation variational lower bound
-* Inference hyperparameters (psi, a, b)
-* Heuristic component birth/death
-* q_x.update: include covariance v?
-* Transpose y, x
-* Remove asserts in q.py
+  update_psi()
+
+
+# Ideas
+* MNIST dataset: classification error
+* Image completion / learning with incomplete data
+* RPCA
+* Autoencoder

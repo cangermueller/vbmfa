@@ -36,12 +36,17 @@
 \maketitle
 \tableofcontents
 
+\newpage
 \section{Factor analysis}
-The factor analysis model describes a $P$ dimensional data vector $\bs{y}$ as a linear function of a $Q$ dimensional vector of latent factors $\bs{x}$, where $Q<P$:
+The factor analysis model describes a $P$ dimensional data vector $\bs{y}$ as a linear function of a $Q$ dimensional vector of latent factors $\bs{x}$ plus some noise $\bs{\eta}$:
 \begin{align}
   \bs{y}=\Lambda\bs{x}+\bs{\mu}+\bs{\eta}
 \end{align}
-Here, $\Lambda$ is the $P\times Q$ factor loading matrix, $\bs{\mu}$ the offset, and $\bs{\nu}$ a normally distributed noise vector with mean zero and diagonal covariance matrix $\Xpsi$:
+The latent factors are assumed to be standard-normal distributed:
+\begin{align}
+  P(\bs{x})=\mathcal{N}(\bs{x}|0,I_Q)
+\end{align}
+$\bs{\eta}$ is a normally distributed noise vector with mean zero and diagonal covariance matrix $\Psi$:
 \begin{align}
   P(\bs{\eta}|\Psi)=\mathcal{N}(\bs{\eta}|0,\Psi) \qquad
   \Psi=\begin{bmatrix}
@@ -50,10 +55,7 @@ Here, $\Lambda$ is the $P\times Q$ factor loading matrix, $\bs{\mu}$ the offset,
     0 & \cdots & \Psi_{PP}
   \end{bmatrix}
 \end{align}
-The latent factors are assumed to be standard-normal distributed:
-\begin{align}
-  P(\bs{x})=\mathcal{N}(\bs{x}|0,I_Q)
-\end{align}
+$\theta=\{\Lambda, \mu, \Psi\}$ are the model parameters. $\Lambda$ is the $P\times Q$ factor loading matrix, whose columns correspond to the eigenvector of the covariance matrix of $\bs{y}$.
 Given the latent factors $\bs{x}$, $\bs{y}$ is hence normally distributed itself:
 \begin{align}
   P(\bs{y}|\bs{x},\Lambda,\bs{\mu},\Psi)=\mathcal{N}(\bs{y}|\Lambda\bs{x}+\bs{\mu},\Psi)
@@ -64,17 +66,55 @@ Integrating out $\bs{x}$ gives:
 \end{align}
 $\Lambda\Lambda^T+\Psi$ is therefore a low-rank approximation of the full covariance matrix of $\bs{y}$. The factor analysis model is identical to probabilistic Principle Component Analysis (PCA) if $\Psi=\sigma^2 I_P$. Factor analysis is therefore a generalisation for probabilistic PCA, which allows for non-isotropic noise. However, there is no longer a closed-form solution for the maximum likelihood estimator of $\Lambda$.
 
-\section{Mixture of factor analysers}
-In the mixture of factor analysers model, $\bs{y}$ can originates from one of $S$ independent factor analysers with different factor loading matrices $\Lambda=\left\{\Xl\right\}_{s=1}^S$ and offset vectors $\bs{\mu}=\left\{\Xu\right\}_{s=1}^S$:
+\subsection{Joint distribution}
 \begin{align}
-  P(\bs{y}|\bs{x},\bs{s},\Xp,\Lambda,\bs{\mu},\Psi)=\sum_s P(s|\Xp) P(\bs{y}|\bs{x},\Xl,\Xu,\Psi)
+  P(\bs{x}, \bs{y}|\theta)=\mathcal{N}(
+  \begin{bmatrix}
+  \bs{x} \\ \bs{y} \end{bmatrix} |
+  \begin{bmatrix}
+    \bs{0} \\
+    \bs{\mu}
+  \end{bmatrix}),
+  \begin{bmatrix}
+    I_Q & \Lambda^T \\
+    \Lambda & \Lambda\Lambda^T + \Psi
+    \label{eq:fa_joint}
+  \end{bmatrix}
 \end{align}
-$\bs{s}$ indicates the true factor analyser, which is modelled as a single draw from a multinomial distribution with mixture-coefficients $\Xp$:
+
+\subsection{Conditional distributions}
+By conditioning on the joint distribution \ref{eq:fa_joint}, one obtains:
+\begin{align}
+  P(\bs{x}|\bs{y},\theta)=\mathcal{N}(\bs{x}|\Lambda^T(\Lambda\Lambda^T+\Psi)(\bs{y}-\bs{\mu}))
+\end{align}
+\begin{align}
+  P(\bs{y}|\bs{x},\theta)=\mathcal{N}(\bs{y}|\Lambda\bs{x}+\bs{\mu},\Psi)
+\end{align}
+
+\subsection{Likelihood}
+The log-likelihood of the model parameters $\theta$ is:
+\begin{align}
+  ll(\theta)=\log\prod_n P(\Xy|\theta)=\sum_n\log \Xdn(\Xy|\Xu,\Xl{\Xl}^T+\Psi)
+\end{align}
+In contrast to probabilistic PCA, there is no maximum likelihood solution for $\theta$.
+
+\newpage
+\section{Mixture of factor analysers}
+In the mixture of factor analysers model, $\bs{y}$ belongs to one of $S$ independent factor analysers with different factor loading matrices $\Lambda=\left\{\Xl\right\}_{s=1}^S$ and offset vectors $\bs{\mu}=\left\{\Xu\right\}_{s=1}^S$:
+\begin{align}
+  \bs{y}=\Xl\bs{x}+\Xu+\bs{\eta}
+\end{align}
+The indicator $s$ is unknown and therefore integrated out:
+\begin{align}
+  P(\bs{y}|\theta)=\sum_s P(s|\Xp)P(\bs{y}|s,\theta)=\sum_s P(s|\Xp)\Xdn(\bs{y}|\Xu\Xl{\Xl}^T+\Psi)
+\end{align}
+The prior $P(\bs{s}|\Xp)$ is a single draw from a multinomial distribution with mixture-coefficients $\Xp$:
 \begin{align}
   P(\bs{s}|\Xp)=\Xdm(\bs{s}|1,\Xp)
 \end{align}
-The model parameters $\left\{\Xp,\Lambda,\bs{\mu}\right\}$ can estimated by maximum likelihood or Bayesian inference. Maximum likelihood estimation via Expectation Maximisation (EM) is fast, but subject to overfitting since it does not take into account model complexity. Bayesian inference prevents overfitting by imposing a prior on the model parameters, but is often intractable. To make inference tractable, approximate Bayesian inference methods can be used. The following sections will explain one of these methods, Variational Inferece, which allows for tractable inference for a Bayesian mixture of factor analysers.
+The model parameters $\theta=\left\{\Xp,\Lambda,\bs{\mu},\Psi\right\}$ can estimated by maximum likelihood or Bayesian inference. Maximum likelihood estimation via Expectation Maximisation (EM) is fast, but subject to overfitting since it does not take into account model complexity. Bayesian inference prevents overfitting by imposing a prior on the model parameters, but is often intractable. To make inference tractable, approximate Bayesian inference methods can be used. The following sections will explain one of these methods, Variational Inferece, which allows for tractable inference for a Bayesian mixture of factor analysers.
 
+\newpage
 \section{Variational Bayesian mixture of factor analysers}
 \subsection{Prior distribution}
 Bayesian inference requires a prior distribution $P(\theta)$ over the model parameters $\theta=\left\{\Xp,\Lambda,\bs{\mu}\right\}$, which can be chosen as follows.
@@ -83,11 +123,15 @@ The prior over the mixture proportions $\bs{\pi}$ is a symmetric Dirichlet distr
 \begin{align}
   P(\Xp|\Xhal\Xhm)=\Xdd(\Xp|\Xhal\Xhm),
 \end{align}
-The prior strengths $\Xhal$ corresponds to the total number of prior counts, which are equally distributed over all factor analysers by setting $\Xhm=[1/S,\dots,1/S]$.
+The prior strengths $\Xhal$ corresponds to the total number of prior counts, and $\Xhm$ to the prior distribution, which is supposed to be uniform: $\Xhm=[1/S,\dots,1/S]$.
+The expectation and variance is therefore:
+\begin{align}
+  <\pi_s>=m_s \qquad \Xvar[\pi_s]=\frac{m_s(1-m_s)}{\Xhal(\Xhal+1)}
+\end{align}
 
 Each factor loading matrix $\Xl$ factorizes by columns $q$, which are normally distributed with mean zero and diagonal covariance matrix ${\Xnq}^{-1}I_P$. This is equivalent to saying $\Xl$ factorizes by rows $p$, which are normally distributed with mean zero and diagonal covariance matrix $\Xdiag[\Xn]^{-1}$.
 \begin{align}
-  P(\Lambda|\Xn)&=\prod_{s,q}\Xdn(\Xlq|0,{\Xnq}^{-1}I_P) \\
+  P(\Lambda|\bs{\nu})&=\prod_{s,q}\Xdn(\Xlq|0,{\Xnq}^{-1}I_P) \\
                 &=\prod_{s,p}\Xdn(\Xlp|0,\Xdiag[\Xn]^{-1})
 \end{align}
 
@@ -120,6 +164,13 @@ The joint distribution of model parameters $\theta$ and data $D$ factorises as f
   P(\theta,D|\Theta)&=P(\theta|\Theta)P(D|\theta,\Theta) \\
   &=P(\Xp|\Xhal\Xhm)P(\bs{\nu}|\Xha,\Xhb)P(\Lambda|\bs{\nu})P(\bs{\mu}|\Xhu,\Xhn) \\
   &\quad \prod_n P(\Xs|\Xp)P(\Xx)P(\Xy|\Xx,\Xl,\Xu,\Xpsi)
+\end{align}
+The log joint distribution is:
+\begin{align}
+  \log P(\theta,D|\Theta)&= \log P(\theta|\Theta) + \log P(D|\theta,\Theta) \\
+  &=\log P(\Xp|\Xhal\Xhm) + \log P(\bs{\nu}|\Xha,\Xhb) + \log P(\Lambda|\bs{\nu}) + \log P(\bs{\mu}|\Xhu,\Xhn) \\
+  &\quad \sum_n \log P(\Xs|\Xp) + \log P(\Xx) + \log P(\Xy|\Xx,\Xl,\Xu,\Xpsi)
+  \label{eq:log_joint}
 \end{align}
 
 \begin{figure}[h]
@@ -158,6 +209,7 @@ The joint distribution of model parameters $\theta$ and data $D$ factorises as f
   \end{center}
 \end{figure}
 
+\newpage
 \section{Variational approximation}
 The goal is to approximate the following posterior distribution:
 \begin{align}
@@ -172,7 +224,11 @@ The choice of this factorisation implies two approximations:
   \item Parameters $\theta$ and latent variables $\left\{\bs{x},\bs{s}\right\}$ are independent.
   \item $\left\{\Lambda,\bs{\mu}\right\}$ are independent of the remaining parameters.
 \end{enumerate}
-Maximising the variational lower bound further factorises $Q$:
+The optimal $Q(\cdot)$ can be found be computing the expectation of the log joint distribution (eq.~\ref{eq:log_joint}):
+\begin{align}
+  \log Q_i \propto <\log P(\theta,D|\Theta)>_{Q_{-i}}
+\end{align}
+This leads to the following factorization:
 \begin{align}
   Q(\bs{\pi},\bs{\nu})Q(\Lambda,\bs{\mu})Q(\bs{x},\bs{s})=Q(\bs{\pi})\prod_s\prod_q Q(\nu_q^s)\prod_s\prod_p Q(\tilde{\Lambda}^s_p) \prod_n Q(\Xx|\Xs)Q(\Xs)
 \end{align}

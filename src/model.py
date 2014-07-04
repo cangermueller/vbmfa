@@ -106,7 +106,7 @@ class Model(object):
         if update is None:
             update = self.update
         for i in range(maxit):
-            update(self, i)
+            self.update()
             models.append(copy.deepcopy(self))
             mses.append(self.mse())
             if (mses[-2]-mses[-1]) <= eps:
@@ -117,7 +117,9 @@ class Model(object):
                 break
         return [mses, models]
 
-    def update(self, model, it):
+    def update(self, model=None):
+        if model is None:
+            model = self
         model.update_x()
         model.update_lm()
         model.update_s()
@@ -187,6 +189,5 @@ class Model(object):
         return y
 
     def mse(self):
-        dy = (self.y-self.predict_y()).ravel('F')
-        return dy.dot(dy)/self.y.shape[1]
+        return np.linalg.norm(self.y - self.predict_y())
 

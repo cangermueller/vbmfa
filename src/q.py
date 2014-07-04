@@ -129,7 +129,7 @@ class Lambda:
 
 class LambdaMu:
 
-    def __init__(self, P, Q, s, coupled=True):
+    def __init__(self, P, Q, s, coupled=False):
         self.P = P
         self.Q = Q
         self.s = s
