@@ -1,3 +1,22 @@
+* check cluster sharp cluster assignment olvetti: underflow?
+* check mse increase vbfa_test.py: 35
+* check initialization
+* optimize update order
+
+# Design
+* transpose y()
+* change constructor
+* rename fas -> components
+* default print methods
+* kwargs in update
+* numpy testing
+* Change Q class names X to Qx?
+* change update_X() arguments?
+* lower case p, q, s in function arguments
+* line wrap
+
+* update noise
+
 * Lower/upper case
   * CONSTANT
   * var_iable
@@ -17,9 +36,3 @@
 * Implementation variational lower bound
   update_psi()
 
-
-# Ideas
-* MNIST dataset: classification error
-* Image completion / learning with incomplete data
-* RPCA
-* Autoencoder
