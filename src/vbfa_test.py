@@ -1,3 +1,5 @@
+"""Test cases for vbfa.py"""
+
 import unittest
 import numpy as np
 import numpy.testing as npt
@@ -11,6 +13,7 @@ def sample_cluster(P=10, Q=5, N=100, mu=0.0, sigma=1.0):
     y = lambda_.dot(x) + mu[:, np.newaxis] + np.random.normal(0.0, sigma, P * N).reshape(P, N)
     return (y, lambda_, x, mu)
 
+
 class TestVbFa(unittest.TestCase):
 
     def test_update(self):
@@ -18,8 +21,8 @@ class TestVbFa(unittest.TestCase):
         P = 30
         Q = 10
         N = 100
-        y = np.random.rand(P, N)
-        fa = vbfa.VbFa(vbfa.Hyper(P, Q), y)
+        Y = np.random.rand(P, N)
+        fa = vbfa.VbFa(Y, Q)
         tol = 1e-5
         for i in range(10):
             # nu
@@ -33,27 +36,28 @@ class TestVbFa(unittest.TestCase):
             # x
             mse = fa.mse()
             fa.update_x()
-            self.assertLess(fa.mse() - mse, tol + 2.0)    # TODO: depends on initialization
+            self.assertLess(fa.mse() - mse, tol + 1.5)    # TODO: depends on initialization
             # mu
             mse = fa.mse()
             fa.update_mu()
             self.assertLess(fa.mse() - mse, tol)
 
-    @unittest.skip('fails with different initialization')
     def test_fit(self):
         np.random.seed(0)
         P = 50
         Q = 10
         N = 100
         mu = 10.0
-        y, lambda_, x, mu = sample_cluster(P, Q, N, mu, 1.0)
-        fa = vbfa.VbFa(vbfa.Hyper(P, Q), y)
-        fa.fit()
+        Y, lambda_, x, mu = sample_cluster(P, Q, N, mu, 1.0)
+        fa = vbfa.VbFa(Y, Q)
+        fa.init()
+        for i in range(10):
+            fa.update()
         npt.assert_array_less(np.abs(fa.q_mu.mean - mu), 1.0)
         self.assertLess(fa.mse(), 60.0)
 
 
-class TestQ(unittest.TestCase):
+class TestNu(unittest.TestCase):
     def test_nu(self):
         P = 10
         Q = 5
@@ -67,6 +71,8 @@ class TestQ(unittest.TestCase):
         q_nu.update(hyper, q_lambda)
         self.assertTrue(np.all(q_nu.b > 0))
 
+
+class TestMu(unittest.TestCase):
     def test_mu(self):
         P = 10
         Q = 5
@@ -83,6 +89,8 @@ class TestQ(unittest.TestCase):
         q_x = vbfa.X(Q, N)
         q_mu.update(hyper, q_lambda, q_x, y)
 
+
+class TestLambda(unittest.TestCase):
     def test_lambda(self):
         P = 10
         Q = 5
@@ -104,6 +112,8 @@ class TestQ(unittest.TestCase):
         for p in range(P):
             self.assertTrue(np.all(np.linalg.eigvals(q_lambda.cov[p]) > 0))
 
+
+class TestX(unittest.TestCase):
     def test_x(self):
         P = 10
         Q = 5
@@ -119,9 +129,6 @@ class TestQ(unittest.TestCase):
         q_lambda = vbfa.Lambda(P, Q)
         q_mu = vbfa.Mu(P)
         q_x.update(hyper, q_lambda, q_mu, y)
-
-
-
 
 
 

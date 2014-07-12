@@ -1,3 +1,5 @@
+"""Test cases for vbmfa.py"""
+
 import numpy as np
 import numpy.testing as npt
 import unittest
@@ -5,7 +7,66 @@ import vbfa
 import vbmfa
 import ipdb
 
+
 class VbMfaTest(unittest.TestCase):
+    def test_update(self):
+        np.random.seed(0)
+        P = 10
+        Q = 5
+        S = 4
+        N = 100
+        Y = np.random.rand(P, N)
+        mfa = vbmfa.VbMfa(Y, Q, S)
+        eps = 0.1
+        for i in range(10):
+            # fas
+            mse = mfa.mse()
+            mfa.update_fas()
+            self.assertLess(mfa.mse() - mse, eps)
+            # s
+            mse = mfa.mse()
+            mfa.update_s()
+            self.assertLess(mfa.mse() - mse, eps)
+            npt.assert_allclose(np.sum(mfa.q_s, 0), 1.0)
+            # pi
+            mse = mfa.mse()
+            mfa.update_pi()
+            self.assertLess(mfa.mse() - mse, eps)
+            npt.assert_allclose(np.sum(mfa.q_pi.expectation()), 1.0)
+
+    def test_single_fa(self):
+        np.random.seed(0)
+        P = 100
+        Q = 50
+        N = 200
+        Y = np.random.rand(P, N)
+        it = 5
+        # VbFa
+        np.random.seed(0)
+        fa = vbfa.VbFa(Y, Q)
+        for i in range(it):
+            fa.update()
+        # VbMfa S = 1
+        np.random.seed(0)
+        mfa = vbmfa.VbMfa(Y, Q, 1)
+        for i in range(it):
+            mfa.update()
+        self.assertEqual(mfa.mse(), fa.mse())
+        npt.assert_array_equal(mfa.fas[0].q_mu.mean, fa.q_mu.mean)
+        npt.assert_array_equal(mfa.fas[0].q_lambda.mean, fa.q_lambda.mean)
+        # VbMfa S = 3
+        np.random.seed(0)
+        mfa = vbmfa.VbMfa(Y, Q, 3)
+        mfa.q_s.fill(0.0)
+        mfa.q_s[0, :] = 1.0
+        for i in range(it):
+            mfa.update_fas()
+        self.assertEqual(mfa.mse(), fa.mse())
+        npt.assert_array_equal(mfa.fas[0].q_mu.mean, fa.q_mu.mean)
+        npt.assert_array_equal(mfa.fas[0].q_lambda.mean, fa.q_lambda.mean)
+
+
+class TestPi(unittest.TestCase):
     def test_pi(self):
         np.random.seed(0)
         S = 10
@@ -13,6 +74,8 @@ class VbMfaTest(unittest.TestCase):
         self.assertEqual(len(q_pi.alpha), S)
         self.assertGreater(str(q_pi), 0)
 
+
+class TestS(unittest.TestCase):
     def test_s(self):
         np.random.seed(0)
         S = 10
@@ -21,70 +84,6 @@ class VbMfaTest(unittest.TestCase):
         self.assertEqual(q_s.shape, (S, N))
         self.assertGreater(str(q_s), 0)
 
-    def test_update(self):
-        np.random.seed(0)
-        P = 10
-        Q = 5
-        S = 4
-        N = 100
-        y = np.random.rand(P, N)
-        mfa = vbmfa.VbMfa(vbmfa.Hyper(P, Q, S), y)
-        for i in range(10):
-            # print "Interation {:d}".format(i)
-            # fas
-            mse = mfa.mse()
-            # print mse
-            mfa.update_fas()
-            self.assertLess(mfa.mse() - mse, 1e-5 + 1.0)    # TODO: depends on initialization
-            # s
-            mse = mfa.mse()
-            # print mse
-            mfa.update_s()
-            self.assertLess(mfa.mse() - mse, 1e-5 + 1.0)    # TODO: depends on initialization
-            npt.assert_allclose(np.sum(mfa.q_s, 0), 1.0)
-            # pi
-            mse = mfa.mse()
-            # print mse
-            mfa.update_pi()
-            self.assertLess(mfa.mse() - mse, 1e-5)
-            npt.assert_allclose(np.sum(mfa.q_pi.expectation()), 1.0)
-            # print mfa.mse()
-
-    def test_single_component(self):
-        np.random.seed(0)
-        P = 100
-        Q = 50
-        N = 200
-        y = np.random.rand(P, N)
-        # VbFa
-        np.random.seed(0)
-        fa = vbfa.VbFa(vbfa.Hyper(P, Q), y)
-        fa.fit(maxit=5)
-        # VbMfa
-        np.random.seed(0)
-        mfa = vbmfa.VbMfa(vbmfa.Hyper(P, Q, 1), y)
-        mfa.fit(maxit=5)
-        # Check equality
-        self.assertEqual(fa.mse(), mfa.mse())
-        npt.assert_array_equal(fa.q_mu.mean, mfa.fas[0].q_mu.mean)
-        npt.assert_array_equal(fa.q_lambda.mean, mfa.fas[0].q_lambda.mean)
-
-    @unittest.skip('not yet required')
-    def test_map(self):
-        np.random.seed(0)
-        P = 10
-        Q = 5
-        S = 2
-        N = 3
-        Y = np.random.rand(P, N)
-        mfa = vbmfa.VbMfa(vbmfa.Hyper(P, Q, S), Y)
-        mfa.q_s.fill(0.0)
-        mfa.q_s[0, 0] = 1.0
-        mfa.q_s[1, 1] = 1.0
-        mfa.q_s[0, 2] = 0.5
-        mfa.q_s[1, 2] = 0.5
-        map_x = mfa.map_x()
-        npt.assert_array_equal(map_x[:, 0], mfa.fas[0].q_x.mean[:, 0])
 
 
 

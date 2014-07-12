@@ -1,32 +1,122 @@
+"""Variational Bayesian Factor Analyser.
+
+Implementation of a single factor analyser.
+Model parameters are inferred by variational Bayes.
+"""
+
 import numpy as np
 from scipy.special import digamma
 import ipdb
 
+
 class VbFa(object):
-    def __init__(self, hyper, y):
-        self.HYPER = hyper
+    """Variational Bayesian Factor Analyser.
+
+    Factorizes Y = L X + mu, where Y is the input data matrix, L the factor loading
+    matrix, X the factor matrix, and mu the mean vector. L and X are rank Q matrices.
+    Given input matrix Y and Q, uses variational Bayes to infer L and X.
+    Example:
+    > fa = VbFa(data, q=2)
+    > fa.fit()
+    > print fa.q_lambda.mean // factor loading matrix L
+    > print fa.q_x.mean // factor matrix X
+    """
+
+    def __init__(self, y, q=None, hyper=None):
+        """Construct VbFa instance.
+
+        Y -- data matrix with samples in columns and features in rows
+        P -- dimension of the high-dimensional space
+        Q -- dimension of the low-dimensional space
+        N -- # samples
+        HYPER -- model hyperparameters
+        q_nu -- Nu factor
+        q_lambda -- Lambda factor
+        q_x -- X factor
+        q_mu -- Mu factor
+        """
         self.Y = y
-        self.P = self.HYPER.P
-        self.Q = self.HYPER.Q
+        self.P = self.Y.shape[0]
+        self.Q = self.P if q is None else q
         self.N = self.Y.shape[1]
+        if hyper is None:
+            self.HYPER = Hyper(self.P, self.Q)
+        else:
+            self.HYPER = hyper
         self.q_nu = Nu(self.Q)
         self.q_mu = Mu(self.P)
         self.q_lambda = Lambda(self.P, self.Q)
         self.q_x = X(self.Q, self.N)
 
+    def fit(self, maxit=10, eps=0.0, verbose=False):
+        """Fit model parameters by updating factors for several iterations
+        and return number of update iterations until convergence.
+
+        maxit -- maximum number of update iterations
+        eps -- stop if change in MSE is below eps
+        verbose -- print statistics
+        """
+        self.init()
+        i = 0
+        while i < maxit:
+            mse_old = self.mse()
+            self.update()
+            mse_new = self.mse()
+            delta = mse_old - mse_new
+            i += 1
+            if verbose:
+                print '{:d}: {:.3f}'.format(i, mse_new)
+            if delta < eps:
+                break
+        return i
+
+    def mse(self):
+        """Compute mean squared error (MSE) between original data and
+        reconstructed data."""
+        return np.linalg.norm(self.Y - self.x_to_y())
+        self.q_x = X(self.Q, self.N)
+
+    def x_to_y(self, x=None):
+        """Reconstruct data from low-dimensional representation."""
+        if x is None:
+            x = self.q_x.mean
+        return self.q_lambda.mean.dot(x) + self.q_mu.mean[:, np.newaxis]
+
+    def q(self, name):
+        """Return factor with the given name."""
+        if name == 'nu':
+            return self.q_nu
+        elif name == 'lambda':
+            return self.q_lambda
+        elif name == 'x':
+            return self.q_x
+        elif name == 'mu':
+            return self.q_mu
+        else:
+            raise 'q_{:s} unknown!'.format(name)
+
+    def init(self):
+        """Initialize factors for fitting."""
+        self.q_mu.mean = self.Y.mean(1)
+
     def update_nu(self):
+        """Update nu factor."""
         self.q_nu.update(self.HYPER, self.q_lambda)
 
-    def update_lambda(self, **kwargs):
-        self.q_lambda.update(self.HYPER, self.q_mu, self.q_nu, self.q_x, self.Y, **kwargs)
+    def update_lambda(self, x_s=None):
+        """Update lambda factor."""
+        self.q_lambda.update(self.HYPER, self.q_mu, self.q_nu, self.q_x, self.Y, x_s=x_s)
 
     def update_x(self):
+        """Update x factor."""
         self.q_x.update(self.HYPER, self.q_lambda, self.q_mu, self.Y)
 
-    def update_mu(self, **kwargs):
-        self.q_mu.update(self.HYPER, self.q_lambda, self.q_x, self.Y, **kwargs)
+    def update_mu(self, x_s=None):
+        """Update mu factor."""
+        self.q_mu.update(self.HYPER, self.q_lambda, self.q_x, self.Y, x_s=x_s)
 
-    def update(self, names=['nu', 'lambda', 'x', 'mu'], **kwargs):
+    def update(self, names=['lambda', 'x', 'nu', 'mu'], **kwargs):
+        """Update all factors once in the given order."""
         if type(names) is str:
             if names == 'nu':
                 self.update_nu()
@@ -40,58 +130,28 @@ class VbFa(object):
             for name in names:
                 self.update(name, **kwargs)
 
-    def q(self, name):
-        if name == 'nu':
-            return self.q_nu
-        elif name == 'lambda':
-            return self.q_lambda
-        elif name == 'x':
-            return self.q_x
-        elif name == 'mu':
-            return self.q_mu
-        else:
-            raise 'q_{:s} unknown!'.format(name)
-
-    def init(self):
-        self.q_mu.mean = self.Y.mean(1)
-
-    def fit(self, maxit=10, eps=0.0, verbose=True):
-        self.init()
-        i = 0
-        while i < maxit:
-            mse = self.mse()
-            self.update()
-            i += 1
-            if verbose:
-                print 'Iteration {:d}: {:.3f}'.format(i, self.mse())
-            if not mse is None and mse - self.mse() < eps:
-                break
-        return i
-
-    def x_to_y(self, x=None):
-        if x is None:
-            x = self.q_x.mean
-        return self.q_lambda.mean.dot(x) + self.q_mu.mean[:, np.newaxis]
-
-    def y_to_x(self, y=None):
-        if y is None:
-            y = self.Y
-        y = y - np.mean(y, 1)[:, np.newaxis]
-        return self.q_x.cov.dot(np.multiply(self.q_lambda.transpose(), self.HYPER.psi)).dot(y)
-
-    def mse(self):
-        return np.linalg.norm(self.Y - self.x_to_y())
-
 
 class Hyper(object):
-    def __init__(self, P, Q=None):
-        self.P = P
-        self.Q = P if Q is None else Q
+    """Class for model hyperparameters."""
+
+    def __init__(self, p, q=None):
+        """Construct Hyper instance.
+
+        P -- dimension of the high-dimensional space
+        Q -- dimension of the low-dimensional space
+        a -- alpha parameter of gamma prior over factor loadings
+        b -- beta parameter of gamma prior over factor loadings
+        mu -- P dimensional mean vector of normal prior over mu vector
+        nu -- P dimensional precision vector of mu covariance matrix diagonal
+        psi -- P dimensional precision vector of noise covariance matrix diagonal
+        """
+        self.P = p
+        self.Q = p if q is None else q
         self.a = 1.0
         self.b = 1.0
         self.mu = np.zeros(self.P)
         self.nu = np.ones(self.P)
-        self.psi = np.ones(self.P) * 10.0  # precision
+        self.psi = np.ones(self.P) * 10.0
 
     def __str__(self):
         s = '\na: {:f}, b: {:f}'.format(self.a, self.b)
@@ -100,17 +160,29 @@ class Hyper(object):
         s += '\npsi: {:s}'.format(self.psi.__str__())
         return s
 
+
 class Nu(object):
+    """Nu factor class.
 
-    def __init__(self, Q):
-        self.Q = Q
-        self.init_rnd()
+    Dirichlet distribution over q factor loading components.
+    """
+    def __init__(self, q):
+        """Construct Nu instance.
 
-    def init_rnd(self):
+        Q -- rank (# columns) of factor loading matrix
+        a -- alpha parameter of Dirichlet distribution
+        b -- beta parameter of Dirichlet distribution
+        """
+        self.Q = q
+        self.init()
+
+    def init(self):
+        """Initialize parameters."""
         self.a = 1.0
         self.b = np.ones(self.Q)
 
     def update(self, hyper, q_lambda):
+        """Update parameter."""
         self.a = hyper.a + 0.5 * hyper.P
         self.b.fill(hyper.b)
         self.b += 0.5 * (np.sum(q_lambda.mean**2, 0) + np.diag(np.sum(q_lambda.cov, 0)))
@@ -120,16 +192,28 @@ class Nu(object):
         return 'a: {:f}\nb: {:s}'.format(self.a, self.b.__str__())
 
     def expectation(self):
+        """Return expectation of Dirichlet distribution."""
         return self.a / self.b
 
 
 class Mu(object):
+    """Mu factor class.
 
-    def __init__(self, P):
-        self.P = P
-        self.init_rnd()
+    Normal distribution over mu with diagonal covariance matrix.
+    """
 
-    def init_rnd(self):
+    def __init__(self, p):
+        """Construct Mu instance.
+
+        P -- dimension of mu vector
+        mean -- mean of Normal distribution
+        cov -- diagonal of covariance matrix
+        """
+        self.P = p
+        self.init()
+
+    def init(self):
+        """Initialize parameters."""
         self.mean = np.random.normal(loc=0.0, scale=1e-3, size=self.P)
         self.cov = np.ones(self.P)
 
@@ -137,6 +221,7 @@ class Mu(object):
         return 'mean:\n{:s}\ncov:\n{:s}'.format(self.mean.__str__(), self.cov.__str__())
 
     def update(self, hyper, q_lambda, q_x, y, x_s=None):
+        """Update parameters."""
         if x_s is None:
             x_s = np.ones(q_x.N)
         # cov
@@ -147,15 +232,26 @@ class Mu(object):
         self.mean = np.multiply(self.cov, self.mean)
 
 
-
 class Lambda(object):
+    """Lambda factor class.
 
-    def __init__(self, P, Q):
-        self.P = P
-        self.Q = Q
-        self.init_rnd()
+    Normal distributions over P rows of lambda matrix.
+    """
 
-    def init_rnd(self):
+    def __init__(self, p, q):
+        """Construct Lambda instance.
+
+        P -- #rows of lambda matrix
+        Q -- #columns of lambda matrix
+        mean -- PxQ mean matrix of lambda matrix
+        cov -- P QxQ covariance matrices for all rows
+        """
+        self.P = p
+        self.Q = q
+        self.init()
+
+    def init(self):
+        """Initialize parameters."""
         self.mean = np.random.normal(loc=0.0, scale=1.0, size=self.P * self.Q).reshape(self.P, self.Q)
         self.cov = np.empty((self.P, self.Q, self.Q))
         for p in range(self.P):
@@ -169,6 +265,7 @@ class Lambda(object):
         return s
 
     def update(self, hyper, q_mu, q_nu, q_x, y, x_s=None):
+        """Update parameters."""
         if x_s is None:
             x_s = np.ones(q_x.N)
         # cov
@@ -181,7 +278,7 @@ class Lambda(object):
         for p in range(self.P):
             self.cov[p] = tt + hyper.psi[p] * t
             self.cov[p] = np.linalg.inv(self.cov[p])
-        # Mean
+        # mean
         self.mean = np.empty((self.P, self.Q))
         for p in range(self.P):
             w = np.multiply(x_s, y[p] - q_mu.mean[p])
@@ -189,17 +286,30 @@ class Lambda(object):
 
 
 class X(object):
+    """X factor class.
 
-    def __init__(self, Q, N):
-        self.Q = Q
-        self.N = N
-        self.init_rnd()
+    Normal distributions over N columns of X matrix.
+    """
 
-    def init_rnd(self):
+    def __init__(self, q, n):
+        """Construct X instance.
+
+        Q -- #rows of X matrix
+        N -- #columns (# samples) of X matrix
+        mean -- QxN mean matrix of X matrix
+        cov -- QxQ covariance matrix shared for all N columns (samples)
+        """
+        self.Q = q
+        self.N = n
+        self.init()
+
+    def init(self):
+        """Initialize parameters."""
         self.mean = np.random.normal(loc=0.0, scale=1.0, size=self.Q * self.N).reshape(self.Q, self.N)
         self.cov = np.eye(self.Q)
 
     def update(self, hyper, q_lambda, q_mu, y):
+        """Update parameters."""
         # cov
         self.cov = np.eye(self.Q) + np.multiply(q_lambda.mean.transpose(), hyper.psi).dot(q_lambda.mean)
         for p in range(len(hyper.psi)):
