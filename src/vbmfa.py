@@ -64,7 +64,9 @@ class VbMfa(object):
         **kwargs -- keyword arguments for converge()
         """
         self.init()
-        return self.converge(self.update, maxit=maxit, eps=eps, **kwargs)
+        num_it = self.converge(self.update, maxit=maxit, eps=eps, **kwargs)
+        self.order_factors()
+        return num_it
 
     def fit_highdim(self, maxit=10, eps=0.0, verbose=False):
         """Fit model parameters to high-dimensional data (P large).
@@ -73,17 +75,19 @@ class VbMfa(object):
         better for high-dimensional data.
         """
         if verbose:
-            print 'Initialization ...'
+            print('Initialization ...')
         self.init()
         if verbose:
-            print 'Initialization components ...'
+            print('Initialization components ...')
         self.converge(self.update_fas, maxit=maxit, eps=0.5, verbose=verbose)
         if verbose:
-            print 'Initialization assignments ...'
+            print('Initialization assignments ...')
         self.converge(lambda: self.update_s_pi(damp=0.8), maxit=maxit, eps=0.0, verbose=verbose)
         if verbose:
-            print 'Fitting ...'
-        self.converge(lambda: self.update(damp=0.8), maxit=maxit, eps=eps, verbose=verbose)
+            print('Fitting ...')
+        num_it = self.converge(lambda: self.update(damp=0.8), maxit=maxit, eps=eps, verbose=verbose)
+        self.order_factors()
+        return num_it
 
     def mse(self):
         """Compute mean squared error (MSE) between original data and
@@ -142,7 +146,7 @@ class VbMfa(object):
             delta = mse_old - mse_new
             it += 1
             if verbose:
-                print '{:d}: {:.3f}'.format(it, mse_new)
+                print('{:d}: {:.3f}'.format(it, mse_new))
         return it
 
     def update_pi(self):
@@ -168,6 +172,10 @@ class VbMfa(object):
         for s in range(self.S):
             means[:, s] = self.fas[s].q_mu.mean
         return 'means:\n{:s}'.format(means)
+
+    def order_factors(self):
+        for fa in self.fas:
+            fa.order_factors()
 
 
 class Hyper(vbfa.Hyper):
@@ -229,13 +237,14 @@ class S(np.ndarray):
     belongs to component i.
     """
 
-    def __init__(self, (S, N)):
+    def __init__(self, dim):
         """Construct S instance.
 
         Inherits from numpy.ndarray
         S -- # components
         N -- # samples
         """
+        (S, N) = dim
         self.S = S
         self.N = N
         self.init()

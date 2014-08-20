@@ -65,9 +65,10 @@ class VbFa(object):
             delta = mse_old - mse_new
             i += 1
             if verbose:
-                print '{:d}: {:.3f}'.format(i, mse_new)
+                print('{:d}: {:.3f}'.format(i, mse_new))
             if delta < eps:
                 break
+        self.order = self.order_factors()
         return i
 
     def mse(self):
@@ -130,6 +131,20 @@ class VbFa(object):
             for name in names:
                 self.update(name, **kwargs)
 
+    def variance_explained(self, sort=False, norm=True):
+        """Compute variance explained by factors."""
+        ve = np.array([l.dot(l) for l in self.q_lambda.mean.T])
+        if sort:
+            ve = np.sort(ve)[::-1]
+        if norm:
+            ve /= ve.sum()
+        return ve
+
+    def order_factors(self):
+        """Orders factors by their importance with 0 as the most important factor."""
+        ve = self.variance_explained()
+        self.order = ve.argsort()[::-1]
+        return self.order
 
 class Hyper(object):
     """Class for model hyperparameters."""
