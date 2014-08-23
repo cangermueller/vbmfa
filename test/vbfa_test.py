@@ -3,6 +3,9 @@
 import unittest
 import numpy as np
 import numpy.testing as npt
+import os
+os.sys.path.insert(0, os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), '../vbmfa'))
 import vbfa
 
 
