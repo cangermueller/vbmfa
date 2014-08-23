@@ -1,16 +1,55 @@
+# Temporary and binary files
+*~
+*.py[cod]
+*.so
+*.cfg
+*.orig
+*.log
+*.pot
+__pycache__/*
+.cache/*
 .*.swp
+.ipynb_checkpoints
+.DS_Store
+
+# Latex files
+*.out
 *.log
 *.pdf
 *.aux
 *.out
-.DS_Store
 *.fdb_latexmk
 *.fls
 *.dvi
 *.fdb_latexmk
 *.fls
 *.toc
-.ipynb_checkpoints
 
-*.pyc
-*.rope*
+# Project files
+.ropeproject
+.project
+.pydevproject
+.settings
+.idea
+
+# Package files
+*.egg
+.installed.cfg
+*.egg-info
+
+# Unittest and coverage
+htmlcov/*
+.coverage
+.tox
+junit.xml
+coverage.xml
+
+# Build and docs folder/files
+build/*
+dist/*
+sdist/*
+docs/_rst/*
+docs/_build/*
+cover/*
+tmp/*
+MANIFEST
