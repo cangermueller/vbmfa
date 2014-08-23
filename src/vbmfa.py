@@ -65,7 +65,6 @@ class VbMfa(object):
         """
         self.init()
         num_it = self.converge(self.update, maxit=maxit, eps=eps, **kwargs)
-        self.order_factors()
         return num_it
 
     def fit_highdim(self, maxit=10, eps=0.0, verbose=False):

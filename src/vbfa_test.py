@@ -56,53 +56,76 @@ class TestVbFa(unittest.TestCase):
         npt.assert_array_less(np.abs(fa.q_mu.mean - mu), 1.0)
         self.assertLess(fa.mse(), 60.0)
 
+    def test_permute(self):
+        np.random.seed(0)
+        P = 30
+        Q = 10
+        N = 100
+        Y = np.random.rand(P, N)
+        fa = vbfa.VbFa(Y, Q)
+        mse = fa.mse()
+        order = np.arange(Q)
+        np.random.shuffle(order)
+        fa.permute(order)
+        self.assertEqual(fa.mse(), mse)
 
 class TestNu(unittest.TestCase):
-    def test_nu(self):
+    def test_init(self):
         P = 10
         Q = 5
-        hyper = vbfa.Hyper(P, Q)
-        # init
         q_nu = vbfa.Nu(Q)
         self.assertEqual(len(q_nu.b), Q)
         self.assertTrue(len(q_nu.__str__()) > 0)
-        # update
+
+    def test_update(self):
+        P = 10
+        Q = 5
+        hyper = vbfa.Hyper(P, Q)
         q_lambda = vbfa.Lambda(P, Q)
+        q_nu = vbfa.Nu(Q)
         q_nu.update(hyper, q_lambda)
         self.assertTrue(np.all(q_nu.b > 0))
 
 
 class TestMu(unittest.TestCase):
-    def test_mu(self):
+    def test_init(self):
         P = 10
         Q = 5
-        hyper = vbfa.Hyper(P, Q)
-        # init
         q_mu = vbfa.Mu(P)
         self.assertEqual(len(q_mu.mean), P)
         self.assertEqual(len(q_mu.cov), P)
         self.assertTrue(len(q_mu.__str__()) > 0)
-        # update
+
+    def test_update(self):
+        np.random.seed(0)
+        P = 10
+        Q = 5
         N = 100
+        q_mu = vbfa.Mu(P)
         y = np.random.rand(P, N)
+        hyper = vbfa.Hyper(P, Q)
         q_lambda = vbfa.Lambda(P, Q)
         q_x = vbfa.X(Q, N)
         q_mu.update(hyper, q_lambda, q_x, y)
 
 
 class TestLambda(unittest.TestCase):
-    def test_lambda(self):
+    def test_init(self):
         P = 10
         Q = 5
-        hyper = vbfa.Hyper(P, Q)
-        # init
         q_lambda = vbfa.Lambda(P, Q)
         self.assertEqual(q_lambda.mean.shape, (P, Q))
         self.assertEqual(len(q_lambda.cov), P)
         for p in range(P):
             self.assertEqual(q_lambda.cov[p].shape, (Q, Q))
         self.assertTrue(len(q_lambda.__str__()) > 0)
-        # update
+
+    def test_update(self):
+        np.random.seed(0)
+        P = 10
+        Q = 5
+        hyper = vbfa.Hyper(P, Q)
+        q_lambda = vbfa.Lambda(P, Q)
         N = 100
         y = np.random.rand(P, N)
         q_mu = vbfa.Mu(P)
@@ -112,19 +135,40 @@ class TestLambda(unittest.TestCase):
         for p in range(P):
             self.assertTrue(np.all(np.linalg.eigvals(q_lambda.cov[p]) > 0))
 
+    def test_permute(self):
+        P = 10
+        Q = 4
+        q_lambda = vbfa.Lambda(P, Q)
+        mean_before = q_lambda.mean.copy()
+        cov_before = q_lambda.cov.copy()
+        order = [2, 3, 1, 0]
+        q_lambda.permute(order)
+        self.assertEqual(q_lambda.mean.shape, (P, Q))
+        for q in range(Q):
+            npt.assert_equal(q_lambda.mean[:, q], mean_before[:, order[q]])
+        for p in range(P):
+            for i in range(Q):
+                for j in range(Q):
+                    self.assertEqual(q_lambda.cov[p, q, q], cov_before[p, order[q], order[q]])
+
 
 class TestX(unittest.TestCase):
-    def test_x(self):
+    def test_init(self):
         P = 10
         Q = 5
         N = 100
-        hyper = vbfa.Hyper(P, Q)
-        # init
         q_x = vbfa.X(Q, N)
         self.assertEqual(q_x.mean.shape, (Q, N))
         self.assertEqual(q_x.cov.shape, (Q, Q))
-        self.assertGreater(q_x.__str__(), 0)
-        # update
+        self.assertGreater(len(q_x.__str__()), 0)
+
+    def test_update(self):
+        np.random.seed(0)
+        P = 10
+        Q = 5
+        N = 100
+        q_x = vbfa.X(Q, N)
+        hyper = vbfa.Hyper(P, Q)
         y = np.random.rand(P, N)
         q_lambda = vbfa.Lambda(P, Q)
         q_mu = vbfa.Mu(P)

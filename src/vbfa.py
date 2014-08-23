@@ -68,7 +68,6 @@ class VbFa(object):
                 print('{:d}: {:.3f}'.format(i, mse_new))
             if delta < eps:
                 break
-        self.order = self.order_factors()
         return i
 
     def mse(self):
@@ -140,11 +139,21 @@ class VbFa(object):
             ve /= ve.sum()
         return ve
 
-    def order_factors(self):
-        """Orders factors by their importance with 0 as the most important factor."""
+    def factors_order(self):
+        """Returns order of factors by the fraction of variance explained."""
         ve = self.variance_explained()
-        self.order = ve.argsort()[::-1]
-        return self.order
+        return ve.argsort()[::-1]
+
+    def permute(self, order):
+        """Permutes factors in the given order."""
+        self.q_lambda.permute(order)
+        self.q_nu.permute(order)
+        self.q_x.permute(order)
+
+    def order_factors(self):
+        """Orders factors by the fraction of variance explained."""
+        self.permute(self.factors_order())
+
 
 class Hyper(object):
     """Class for model hyperparameters."""
@@ -209,6 +218,10 @@ class Nu(object):
     def expectation(self):
         """Return expectation of Dirichlet distribution."""
         return self.a / self.b
+
+    def permute(self, order):
+        self.b = self.b[order]
+
 
 
 class Mu(object):
@@ -299,6 +312,12 @@ class Lambda(object):
             w = np.multiply(x_s, y[p] - q_mu.mean[p])
             self.mean[p] = hyper.psi[p] * self.cov[p].dot(q_x.mean.dot(w))
 
+    def permute(self, order):
+        self.mean = self.mean[:, order]
+        for p in range(self.P):
+            self.cov[p] = self.cov[p, order, :]
+            self.cov[p] = self.cov[p, :, order]
+
 
 class X(object):
     """X factor class.
@@ -335,3 +354,8 @@ class X(object):
 
     def __str__(self):
         return 'mean:\n{:s}\ncov:\n{:s}'.format(self.mean.transpose().__str__(), self.cov.__str__())
+
+    def permute(self, order):
+        self.mean = self.mean[order, :]
+        self.cov = self.cov[order, :]
+        self.cov = self.cov[:, order]

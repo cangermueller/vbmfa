@@ -72,7 +72,7 @@ class TestPi(unittest.TestCase):
         S = 10
         q_pi = vbmfa.Pi(S)
         self.assertEqual(len(q_pi.alpha), S)
-        self.assertGreater(str(q_pi), 0)
+        self.assertGreater(len(str(q_pi)), 0)
 
 
 class TestS(unittest.TestCase):
@@ -82,7 +82,7 @@ class TestS(unittest.TestCase):
         N = 100
         q_s = vbmfa.S((S, N))
         self.assertEqual(q_s.shape, (S, N))
-        self.assertGreater(str(q_s), 0)
+        self.assertGreater(len(str(q_s)), 0)
 
 
 
