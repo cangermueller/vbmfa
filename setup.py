@@ -23,10 +23,10 @@ __location__ = os.path.join(os.getcwd(), os.path.dirname(
 
 # Change these settings according to your needs
 MAIN_PACKAGE = "vbmfa"
-DESCRIPTION = "None"
-LICENSE = "new BSD"
-URL = "None"
-AUTHOR = "Angermueller Christof"
+DESCRIPTION = "Variational Bayesian Mixture of Factor Analysers"
+LICENSE = "GNU GPLv3+"
+URL = "https://github.com/cangermueller/vbmfa"
+AUTHOR = "Christof Angermueller"
 EMAIL = "cangermueller@gmail.com"
 
 COVERAGE_XML = False
@@ -36,7 +36,18 @@ JUNIT_XML = False
 # Add here all kinds of additional classifiers as defined under
 # https://pypi.python.org/pypi?%3Aaction=list_classifiers
 CLASSIFIERS = ['Development Status :: 4 - Beta',
-               'Programming Language :: Python']
+               'Intended Audience :: Developers',
+               'Intended Audience :: Education',
+               'Intended Audience :: Science/Research',
+               'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
+               'Operating System :: MacOS',
+               'Operating System :: POSIX :: Linux',
+               'Programming Language :: Python :: 3.4',
+               'Topic :: Scientific/Engineering :: Artificial Intelligence',
+               'Topic :: Scientific/Engineering :: Bio-Informatics',
+               'Topic :: Scientific/Engineering :: Image Recognition',
+               'Topic :: Scientific/Engineering :: Information Analysis',
+               ]
 
 # Add here console scripts like ['hello_world = vbmfa.module:function']
 CONSOLE_SCRIPTS = []
@@ -161,7 +172,8 @@ def setup_package():
     # Some helper variables
     version = versioneer.get_version()
     docs_path = os.path.join(__location__, "docs")
-    docs_build_path = os.path.join(docs_path, "_build")
+    docs_build_path = os.path.join(docs_path, "build")
+    docs_source_path = os.path.join(docs_path, "source")
     install_reqs = get_install_requirements("requirements.txt")
 
     command_options = {
@@ -169,8 +181,8 @@ def setup_package():
                  'version': ('setup.py', version.split('-', 1)[0]),
                  'release': ('setup.py', version),
                  'build_dir': ('setup.py', docs_build_path),
-                 'config_dir': ('setup.py', docs_path),
-                 'source_dir': ('setup.py', docs_path)},
+                 'config_dir': ('setup.py', docs_source_path),
+                 'source_dir': ('setup.py', docs_source_path)},
         'doctest': {'project': ('setup.py', MAIN_PACKAGE),
                     'version': ('setup.py', version.split('-', 1)[0]),
                     'release': ('setup.py', version),
@@ -196,6 +208,8 @@ def setup_package():
           license=LICENSE,
           long_description=read('README.rst'),
           classifiers=CLASSIFIERS,
+          keywords=['Factor Analysis', 'PCA', 'Probabilistic PCA',
+                    'Dimensionality Reduction', 'Clustering'],
           test_suite='tests',
           packages=setuptools.find_packages(exclude=['tests', 'tests.*']),
           install_requires=install_reqs,

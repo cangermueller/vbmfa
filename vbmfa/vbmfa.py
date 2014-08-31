@@ -1,4 +1,4 @@
-"""Variational Bayesian Mixture of Factor Analyser.
+"""Variational Bayesian Mixture of Factor Analysers.
 
 Implementation of a mixture of factor analysers.
 Model parameters are inferred by variational Bayes.
@@ -9,38 +9,73 @@ from scipy.special import digamma
 import sklearn.cluster
 import vbfa
 import numpy.testing as npt
-import pdb
 
 
 class VbMfa(object):
     """Variational Bayesian Mixture of Factor Analysers.
 
-    Factorizes Y = L_s X_s + mu_s, where Y is the input data matrix,
-    L_s a factor loading matrix, X_s a factor matrix, mu_s a mean vector, and
-    s=1,...,S, where S is the total number of factor analysers (=components).
-    Given input matrix Y and rank Q of L_s and X_s, uses variational Bayes to
-    infer model parameters.
-    Example:
-    > mfa = VbMfa(data, q=2, s=2)
-    > mfa.fit()
-    > print mfa.fas[0].q_lambda.mean // factor loading matrix L of component 0
-    > print mfa.fas[1].q_x.mean // factor matrix X of component 1
-    > print mfa.q_s // component indicators
-    > print mfa.q_pi // component distribution
+    Takes a :math:`p \\times n` data matrix :math:`y` with :math:`n` samples
+    :math:`y_i` of dimension :math:`p`, and describes them as a mixture of
+    :math:`s` components, i.e. factor analysers, each of which has :math:`q`
+    latent factors:
+
+    .. math::
+
+        P(y_i|\\theta) = \sum_s P(s) P(y_i|\\theta_s)
+
+    Here, :math:`\\theta_s` are the parameters of component :math:`s`
+    (see :mod:`vbfa`). Efficient variational Bayes is used to infer the
+    distribution over all model parameters.
+
+    Parameters
+    ----------
+    y : :py:class:`numpy.ndarray`
+        Data matrix with samples in columns and features in rows
+    q : int
+        Dimension of the low-dimensional space (# factors)
+    s : int
+        # components
+    hyper : :py:class:`vbmfa.Hyper`
+        Model hyperparameters
+
+    Attributes
+    ----------
+    Y : :py:class:`numpy.ndarray`
+        Data matrix with samples in columns and features in rows
+    P : int
+        Dimension of the high-dimensional space
+    Q : int
+        Dimension of the low-dimensional space (# factors)
+    S : int
+        # components
+    N : int
+        # Samples
+    HYPER : :py:class:`vbfa.Hyper`
+        Model hyperparameters
+    fas : list
+        List of S VbFa factor analyser instances
+    q_pi : :py:class:`vbmfa.Pi`
+        Distribution over Pi
+    q_s : :py:class:`vbmfa.S`
+        Distribution over component indicators s
+
+    Examples
+    --------
+    .. code:: python
+
+        mfa = VbMfa(data, q=2, s=2)
+        mfa.fit()
+        print(mfa.fas[0].q_lambda.mean)
+        print(mfa.fas[1].q_x.mean)
+        print(mfa.q_s)
+        print(mfa.q_pi)
+
+    Note
+    ----
+    The term `component` means the same as `factor analyser`.
+
     """
     def __init__(self, y, q=None, s=1, hyper=None):
-        """Construct VbMfa instance.
-
-        Y -- data matrix with samples in columns and features in rows
-        P -- dimension of the high-dimensional space
-        Q -- dimension of the low-dimensional space
-        S -- # factor analysers (# components)
-        N -- # samples
-        HYPER -- model hyperparameters
-        fas -- list of S VbFa factor analyser instances
-        q_pi -- Pi factor
-        q_s -- S factor
-        """
         self.Y = y
         self.P = self.Y.shape[0]
         self.Q = self.P if q is None else q
@@ -56,18 +91,29 @@ class VbMfa(object):
         self.q_s = S((self.S, self.N))
 
     def fit(self, maxit=10, eps=0.0, **kwargs):
-        """Fit model parameters by updating factors for several iterations.
+        """Fit model parameters by updating paramters until convergence.
 
-        maxit -- maximum number of update iterations
-        eps -- stop if change in mse is below eps
-        and return number of update iterations until convergence.
-        **kwargs -- keyword arguments for converge()
+        Parameters
+        ----------
+        maxit : int
+            Maximum number of update iterations
+        eps : float
+            Stop if change in mse is below eps
+        kwargs : dict
+            Keyword arguments passed to :py:func:`converge`
+        verbose : bool
+            Print statistics after each iteration
+
+        Returns
+        -------
+        num_it : int
+            Number of iterations
         """
         self.init()
         num_it = self.converge(self.update, maxit=maxit, eps=eps, **kwargs)
         return num_it
 
-    def fit_highdim(self, maxit=10, eps=0.0, verbose=False):
+    def fit_highdim(self, maxit=10, eps=0.0, **kwargs):
         """Fit model parameters to high-dimensional data (P large).
 
         Same as fit(), but with special update heuristic which might work
@@ -78,13 +124,15 @@ class VbMfa(object):
         self.init()
         if verbose:
             print('Initialization components ...')
-        self.converge(self.update_fas, maxit=maxit, eps=0.5, verbose=verbose)
+        self.converge(self.update_fas, maxit=maxit, eps=0.5, **kwargs)
         if verbose:
             print('Initialization assignments ...')
-        self.converge(lambda: self.update_s_pi(damp=0.8), maxit=maxit, eps=0.0, verbose=verbose)
+        self.converge(lambda: self.update_s_pi(damp=0.8), maxit=maxit, eps=0.0,
+                      **kwargs)
         if verbose:
             print('Fitting ...')
-        num_it = self.converge(lambda: self.update(damp=0.8), maxit=maxit, eps=eps, verbose=verbose)
+        num_it = self.converge(lambda: self.update(damp=0.8), maxit=maxit,
+                               eps=eps, **kwargs)
         self.order_factors()
         return num_it
 
@@ -103,9 +151,9 @@ class VbMfa(object):
     def init(self):
         """Initialize factors for fitting.
 
-        Uses k-means to estimate cluster centers, which are used to initialize q_mu.
-        q_s is initialized by the distance of samples Y[:n] to the cluster
-        centers.
+        Uses k-means to estimate cluster centers, which are used to initialize
+        q_mu.  q_s is initialized by the distance of samples Y[:n] to the
+        cluster centers.
         """
         if self.S == 1:
             self.fas[0].init()
@@ -124,17 +172,33 @@ class VbMfa(object):
             self.q_s[:] = dist
 
     def update(self, **kwargs):
-        """Update all factors once."""
+        """Update all factors once.
+
+        Parameters
+        ----------
+        kwargs: dict
+            Passed to :py:func:`VbMfa.update_s`
+        """
         self.update_fas()
         self.update_s(**kwargs)
         self.update_pi()
 
     def converge(self, fun, maxit=1, eps=0.5, verbose=False):
-        """Call function fun until MSE converges and return # iterations.
+        """Call function fun until MSE converges.
 
-        maxit -- maximum # iterations
-        eps -- stop if change in MSE is below eps
-        verbose -- print statistics
+        Parameters
+        ----------
+        maxit : int
+            Maximum # iterations
+        eps : float
+            Stop if change in MSE is below eps
+        verbose : bool
+            Print statistics
+
+        Returns
+        -------
+        num_it : int
+            # iterations until convergence
         """
         it = 0
         delta = eps
@@ -153,16 +217,28 @@ class VbMfa(object):
         self.q_pi.update(self.HYPER, self.q_s)
 
     def update_s(self, **kwargs):
-        """Update s factor."""
+        """Update s factor.
+
+        Parameters
+        ----------
+        kwargs : dict
+            Passed to :py:func:`S.update`
+        """
         self.q_s.update(self.HYPER, self.q_pi, self.fas, self.Y, **kwargs)
 
     def update_s_pi(self, **kwargs):
-        """Update s and pi factor."""
+        """Update s and pi factor.
+
+        Parameters
+        ----------
+        kwargs : dict
+            Passed to :py:func:`S.update`
+        """
         self.update_s(**kwargs)
         self.update_pi()
 
     def update_fas(self):
-        """Update all factor analysers."""
+        """Update all components."""
         for s in range(self.S):
             self.fas[s].update(x_s=self.q_s[s])
 
@@ -173,22 +249,37 @@ class VbMfa(object):
         return 'means:\n{:s}'.format(means)
 
     def order_factors(self):
+        """Order factors of all components."""
         for fa in self.fas:
             fa.order_factors()
 
 
 class Hyper(vbfa.Hyper):
-    """Class for model hyperparameters."""
-    def __init__(self, P, Q, S=1):
-        """Construct Hyper instance.
+    """Class for model hyperparameters.
 
-        Inherits from vbfa.VbFa.
-        S -- number of factor analysers
-        alpha -- strength of Dirichlet prior on pi
-        m -- distribution of Dirichlet prior on pi
-        """
-        super(Hyper, self).__init__(P, Q)
-        self.S = S
+    Inherits from :py:class:`vbfa.Hyper`.
+
+    Parameters
+    ----------
+    p : int
+        Dimension of the high-dimensional space
+    q : int
+        Dimension of the low-dimensional space
+    s : int
+        # components
+
+    Attributes
+    ----------
+    S : int
+        # components
+    alpha : float
+        Strength of Dirichlet prior on pi
+    m : :py:class:`numpy.ndarray`
+        Distribution of Dirichlet prior on pi
+    """
+    def __init__(self, p, q, s=1):
+        super(Hyper, self).__init__(p, q)
+        self.S = s
         self.alpha = 1.0
         self.m = np.empty(self.S)
         self.m.fill(self.S**-1)
@@ -203,14 +294,21 @@ class Pi:
     """Pi factor class.
 
     Dirichlet distribution over component probabilities pi.
-    """
-    def __init__(self, S):
-        """Construct Pi instance.
 
-        S -- # components
-        alpha -- S dimensional vector of Dirichlet parameters.
-        """
-        self.S = S
+    Parameters
+    ----------
+    s : int
+        # components
+
+    Attributes
+    ----------
+    S : int
+        # components
+    alpha : :py:class:`numpy.ndarray`
+        S dimensional vector of Dirichlet parameters.
+    """
+    def __init__(self, s):
+        self.S = s
         self.init()
 
     def init(self):
@@ -218,31 +316,53 @@ class Pi:
         self.alpha = np.random.normal(loc=1.0, scale=1e-3, size=self.S)
 
     def update(self, hyper, q_s):
-        """Update parameters."""
+        """Update parameters.
+
+        Parameters
+        ----------
+        hyper : :py:class:`vbmfa.Hyper`
+            Hyperparameters
+        q_s : :py:class:`vbmfa.S`
+            Distribution over component indicators s
+        """
         self.alpha = hyper.alpha * hyper.m + np.sum(q_s, 1)
 
     def __str__(self):
         return 'alpha: {:s}'.format(self.alpha.__str__())
 
     def expectation(self):
-        """Return expectation of Dirichlet distribution."""
+        """Compute expectation of Dirichlet distribution.
+
+        Returns
+        -------
+        exp : float
+            Expectation of Dirichlet distribution
+        """
         return self.alpha / float(sum(self.alpha))
 
 
 class S(np.ndarray):
     """S factor class.
 
-    SxN matrix, where s_i,j is the probability that sample j
-    belongs to component i.
+    :math:`s \\times n` dimensional matrix :math:`S`, where :math:`s_{ij}` is the
+    probability that sample :math:`j` belongs to component :math:`i`.
+
+    Inherits from :py:class:`numpy.ndarray`.
+
+    Parameters
+    ----------
+    dim : array like
+        Shape (s, n) of matrix
+
+    Attributes
+    ----------
+    S : int
+        # components
+    N : int
+        # samples
     """
 
     def __init__(self, dim):
-        """Construct S instance.
-
-        Inherits from numpy.ndarray
-        S -- # components
-        N -- # samples
-        """
         (S, N) = dim
         self.S = S
         self.N = N
@@ -255,7 +375,30 @@ class S(np.ndarray):
         self[:] = self / np.sum(self, 0)
 
     def update_s(self, hyper, q_lambda, q_mu, q_pi_alpha, q_x, y):
-        """Update parameters of component s."""
+        """Update parameters of component s in log-space.
+
+        Parameters
+        ----------
+        hyper : :py:class:`vbmfa.Hyper`
+            Hyperparameters
+        q_lambda : :py:class:`vbfa.Lambda`
+            Lambda distribution
+        q_mu : :py:class:`vbfa.Mu`
+            Mu distribution
+        q_pi : :py:class:`vbmfa.Pi`
+            Pi distribution
+        q_pi_alpha : :py:class:`numpy.ndarray`
+            Alpha parameters of Pi distribution
+        q_x : :py:class:`vbfa.X`
+            X distribution
+        y : :py:class:`numpy.ndarray`
+            Data matrix
+
+        Returns
+        -------
+        s : :py:class:`numpy.ndarray`
+            Updated parameters of N samples of component s in log-space
+        """
         # const
         const = digamma(q_pi_alpha) + 0.5 * np.linalg.slogdet(q_x.cov)[1]
         # fit
@@ -272,7 +415,21 @@ class S(np.ndarray):
         return const + fit + cov
 
     def update(self, hyper, q_pi, fas, y, damp=0.0):
-        """Update parameters of all components."""
+        """Update parameters of all components.
+
+        Parameters
+        ----------
+        hyper : :py:class:`vbmfa.Hyper`
+            Hyperparameters
+        q_pi : :py:class:`vbmfa.Pi`
+            Pi distribution
+        fas : list
+            List of all components
+        y : :py:class:`numpy.ndarray`
+            Data matrix
+        damp : float
+            Damping factor: reuse ``damp`` % of old parameters
+        """
         new = np.empty((self.S, self.N))
         for s in range(len(fas)):
             new[s, :] = self.update_s(hyper, fas[s].q_lambda, fas[s].q_mu, q_pi.alpha[s], fas[s].q_x, y)
