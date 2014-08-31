@@ -18,6 +18,7 @@ explanation of the model can be found `here
 <https://github.com/cangermueller/vbmfa/raw/master/docs/data/model.pdf>`_.
 
 .. note::
+
   The current version is still under development, and needs to be optimized for
   large-scale data set. I am open for any suggestions, and happy about every
   bug report!
