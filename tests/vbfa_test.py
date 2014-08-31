@@ -70,7 +70,7 @@ class TestVbFa(unittest.TestCase):
         order = np.arange(Q)
         np.random.shuffle(order)
         fa.permute(order)
-        self.assertEqual(fa.mse(), mse)
+        self.assertAlmostEqual(fa.mse(), mse)
 
 class TestNu(unittest.TestCase):
     def test_init(self):

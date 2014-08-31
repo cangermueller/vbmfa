@@ -50,5 +50,5 @@ dist/*
 sdist/*
 docs/build/*
 /tmp/
-/venv/
+/venv*/
 MANIFEST

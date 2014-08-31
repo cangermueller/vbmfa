@@ -22,7 +22,7 @@ explanation of the model can be found :download:`here <../data/model.pdf>`.
 
 .. note::
   The current version is still under development, and needs to be optimized for
-  large-scale data set. I am open for any suggestions, and happy about every
+  large-scale data sets. I am open for any suggestions, and happy about every
   bug report!
 
 Installation
