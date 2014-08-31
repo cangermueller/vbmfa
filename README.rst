@@ -17,11 +17,11 @@ dimensional subspace by automatic relevance determination (ARD). A detailed
 explanation of the model can be found `here
 <https://github.com/cangermueller/vbmfa/raw/master/docs/data/model.pdf>`_.
 
-.. note::
-
-  The current version is still under development, and needs to be optimized for
-  large-scale data set. I am open for any suggestions, and happy about every
-  bug report!
+Note
+----
+The current version is still under development, and needs to be optimized for
+large-scale data set. I am open for any suggestions, and happy about every
+bug report!
 
 Installation
 ------------
@@ -52,3 +52,9 @@ References
   <http://digital-library.theiet.org/content/conferences/10.1049/cp_19991160.>`_
 .. [3] `Beal, Matthew J. “Variational Algorithms For Approximate Bayesian
   Inference,” 2003. <http://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=2&cad=rja&uact=8&ved=0CC0QFjAB&url=http%3A%2F%2Fwww.cse.buffalo.edu%2Ffaculty%2Fmbeal%2Fpapers%2Fbeal03.pdf&ei=ChT6U4mOIYbiavLXgZAP&usg=AFQjCNE2LgZHagMBM7pJACGSsk4l0jgK9w&sig2=c0f_fiXWy4DekYfh6wimLA&bvm=bv.73612305,d.d2s>`_
+
+Contact
+-------
+Christof Angermueller
+
+https://github.com/cangermueller
