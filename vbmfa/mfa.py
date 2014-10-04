@@ -8,7 +8,9 @@ import numpy as np
 from scipy.special import digamma
 import sklearn.cluster
 import numpy.testing as npt
-from . import vbfa
+import vbmfa.fa as vbmfa_fa
+# Use the following line instead for sphinx
+# import fa as vbmfa_fa
 
 
 class VbMfa(object):
@@ -24,7 +26,7 @@ class VbMfa(object):
         P(y_i|\\theta) = \sum_s P(s) P(y_i|\\theta_s)
 
     Here, :math:`\\theta_s` are the parameters of component :math:`s`
-    (see :mod:`vbfa`). Efficient variational Bayes is used to infer the
+    (see :mod:`fa`). Efficient variational Bayes is used to infer the
     distribution over all model parameters.
 
     Parameters
@@ -35,7 +37,7 @@ class VbMfa(object):
         Dimension of the low-dimensional space (# factors)
     s : int
         # components
-    hyper : :py:class:`vbmfa.Hyper`
+    hyper : :py:class:`mfa.Hyper`
         Model hyperparameters
 
     Attributes
@@ -50,13 +52,13 @@ class VbMfa(object):
         # components
     N : int
         # Samples
-    HYPER : :py:class:`vbfa.Hyper`
+    HYPER : :py:class:`fa.Hyper`
         Model hyperparameters
     fas : list
         List of S VbFa factor analyser instances
-    q_pi : :py:class:`vbmfa.Pi`
+    q_pi : :py:class:`mfa.Pi`
         Distribution over Pi
-    q_s : :py:class:`vbmfa.S`
+    q_s : :py:class:`mfa.S`
         Distribution over component indicators s
 
     Examples
@@ -86,7 +88,7 @@ class VbMfa(object):
         else:
             self.HYPER = hyper
         self.Y = y
-        self.fas = [vbfa.VbFa(self.Y, self.Q, hyper=self.HYPER) for s in range(self.S)]
+        self.fas = [vbmfa_fa.VbFa(self.Y, self.Q, hyper=self.HYPER) for s in range(self.S)]
         self.q_pi = Pi(self.S)
         self.q_s = S((self.S, self.N))
 
@@ -113,7 +115,7 @@ class VbMfa(object):
         num_it = self.converge(self.update, maxit=maxit, eps=eps, **kwargs)
         return num_it
 
-    def fit_highdim(self, maxit=10, eps=0.0, **kwargs):
+    def fit_highdim(self, maxit=10, eps=0.0, verbose=False, **kwargs):
         """Fit model parameters to high-dimensional data (P large).
 
         Same as fit(), but with special update heuristic which might work
@@ -250,14 +252,14 @@ class VbMfa(object):
 
     def order_factors(self):
         """Order factors of all components."""
-        for fa in self.fas:
-            fa.order_factors()
+        for f in self.fas:
+            f.order_factors()
 
 
-class Hyper(vbfa.Hyper):
+class Hyper(vbmfa_fa.Hyper):
     """Class for model hyperparameters.
 
-    Inherits from :py:class:`vbfa.Hyper`.
+    Inherits from :py:class:`fa.Hyper`.
 
     Parameters
     ----------
@@ -320,9 +322,9 @@ class Pi:
 
         Parameters
         ----------
-        hyper : :py:class:`vbmfa.Hyper`
+        hyper : :py:class:`mfa.Hyper`
             Hyperparameters
-        q_s : :py:class:`vbmfa.S`
+        q_s : :py:class:`mfa.S`
             Distribution over component indicators s
         """
         self.alpha = hyper.alpha * hyper.m + np.sum(q_s, 1)
@@ -379,17 +381,17 @@ class S(np.ndarray):
 
         Parameters
         ----------
-        hyper : :py:class:`vbmfa.Hyper`
+        hyper : :py:class:`mfa.Hyper`
             Hyperparameters
-        q_lambda : :py:class:`vbfa.Lambda`
+        q_lambda : :py:class:`fa.Lambda`
             Lambda distribution
-        q_mu : :py:class:`vbfa.Mu`
+        q_mu : :py:class:`fa.Mu`
             Mu distribution
-        q_pi : :py:class:`vbmfa.Pi`
+        q_pi : :py:class:`mfa.Pi`
             Pi distribution
         q_pi_alpha : :py:class:`numpy.ndarray`
             Alpha parameters of Pi distribution
-        q_x : :py:class:`vbfa.X`
+        q_x : :py:class:`fa.X`
             X distribution
         y : :py:class:`numpy.ndarray`
             Data matrix
@@ -419,9 +421,9 @@ class S(np.ndarray):
 
         Parameters
         ----------
-        hyper : :py:class:`vbmfa.Hyper`
+        hyper : :py:class:`mfa.Hyper`
             Hyperparameters
-        q_pi : :py:class:`vbmfa.Pi`
+        q_pi : :py:class:`mfa.Pi`
             Pi distribution
         fas : list
             List of all components

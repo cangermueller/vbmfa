@@ -1,9 +1,9 @@
-"""Test cases for vbfa.py"""
+"""Test cases for fa.py"""
 
 import unittest
 import numpy as np
 import numpy.testing as npt
-import vbmfa.vbfa as vbfa
+import vbmfa.fa as vbfa
 
 
 def sample_cluster(P=10, Q=5, N=100, mu=0.0, sigma=1.0):

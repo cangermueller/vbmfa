@@ -1,7 +1,7 @@
 vbmfa module
 ============
 
-.. automodule:: vbmfa
+.. automodule:: mfa
 
 VbMfa
 -----

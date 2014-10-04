@@ -30,7 +30,7 @@ class VbFa(object):
         Data matrix with samples in columns and features in rows
     q : int
         Dimension of low-dimensional space (# factors)
-    hyper : :py:class:`vbfa.Hyper`
+    hyper : :py:class:`fa.Hyper`
 
     Attributes
     ----------
@@ -42,15 +42,15 @@ class VbFa(object):
         Dimension of low-dimensional space (# factors)
     N : int
         # Samples
-    hyper : :py:class:`vbfa.Hyper`
+    hyper : :py:class:`fa.Hyper`
         Hyperparameters
-    q_nu : :py:class:`vbfa.Nu`
+    q_nu : :py:class:`fa.Nu`
         Nu distribution
-    q_mu : :py:class:`vbfa.Mu`
+    q_mu : :py:class:`fa.Mu`
         Mu distribution
-    q_lambda : :py:class:`vbfa.Lambda`
+    q_lambda : :py:class:`fa.Lambda`
         Lambda distribution
-    q_x : :py:class:`vbfa.X`
+    q_x : :py:class:`fa.X`
         X distribution
 
     Examples
@@ -335,9 +335,9 @@ class Nu(object):
 
         Parameters
         ----------
-        hyper : :py:class:`vbfa.Hyper`
+        hyper : :py:class:`fa.Hyper`
             Hyperparameters
-        q_lambda : :py:class:`vbfa.Lambda`
+        q_lambda : :py:class:`fa.Lambda`
             Factor matrix
         """
         self.a = hyper.a + 0.5 * hyper.P
@@ -400,11 +400,11 @@ class Mu(object):
 
         Parameters
         ----------
-        hyper : :py:class:`vbfa.Hyper`
+        hyper : :py:class:`fa.Hyper`
             Hyperparameters
-        q_lambda : :py:class:`vbfa.Lambda`
+        q_lambda : :py:class:`fa.Lambda`
             Factor matrix
-        q_x : :py:class:`vbfa.X`
+        q_x : :py:class:`fa.X`
             Factor loadings matrix
         x_s : :py:class:`numpy.ndarray`
             Sample weights
@@ -467,13 +467,13 @@ class Lambda(object):
 
         Parameters
         ----------
-        hyper : :py:class:`vbfa.Hyper`
+        hyper : :py:class:`fa.Hyper`
             Hyperparameters
-        q_mu : :py:class:`vbfa.Mu`
+        q_mu : :py:class:`fa.Mu`
             Mu distribution
-        q_nu : :py:class:`vbfa.Nu`
+        q_nu : :py:class:`fa.Nu`
             Nu distribution
-        q_x : :py:class:`vbfa.X`
+        q_x : :py:class:`fa.X`
             X distribution
         y : :py:class:`numpy.ndarray`
             Data matrix
@@ -551,11 +551,11 @@ class X(object):
 
         Parameters
         ----------
-        hyper : :py:class:`vbfa.Hyper`
+        hyper : :py:class:`fa.Hyper`
             Hyperparameters
-        q_lambda : :py:class:`vbfa.Lambda`
+        q_lambda : :py:class:`fa.Lambda`
             Lambda distribution
-        q_mu : :py:class:`vbfa.Mu`
+        q_mu : :py:class:`fa.Mu`
             Mu distribution
         y : :py:class:`numpy.ndarray`
             Data matrix

@@ -1,7 +1,7 @@
 vbfa module
 ===========
 
-.. automodule:: vbfa
+.. automodule:: fa
 
 Vbfa
 ----

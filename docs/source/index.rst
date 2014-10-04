@@ -40,8 +40,8 @@ API documentation
 .. toctree::
   :maxdepth: 2
 
-  vbfa
-  vbmfa
+  fa
+  mfa
   
 Examples
 --------

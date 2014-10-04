@@ -3,7 +3,8 @@
 import numpy as np
 import numpy.testing as npt
 import unittest
-from vbmfa import vbfa, vbmfa
+import vbmfa.fa
+import vbmfa.mfa
 
 class VbMfaTest(unittest.TestCase):
     def test_update(self):
@@ -13,7 +14,7 @@ class VbMfaTest(unittest.TestCase):
         S = 4
         N = 100
         Y = np.random.rand(P, N)
-        mfa = vbmfa.VbMfa(Y, Q, S)
+        mfa = vbmfa.mfa.VbMfa(Y, Q, S)
         eps = 0.1
         for i in range(10):
             # fas
@@ -40,12 +41,12 @@ class VbMfaTest(unittest.TestCase):
         it = 5
         # VbFa
         np.random.seed(0)
-        fa = vbfa.VbFa(Y, Q)
+        fa = vbmfa.fa.VbFa(Y, Q)
         for i in range(it):
             fa.update()
         # VbMfa S = 1
         np.random.seed(0)
-        mfa = vbmfa.VbMfa(Y, Q, 1)
+        mfa = vbmfa.mfa.VbMfa(Y, Q, 1)
         for i in range(it):
             mfa.update()
         self.assertEqual(mfa.mse(), fa.mse())
@@ -53,7 +54,7 @@ class VbMfaTest(unittest.TestCase):
         npt.assert_array_equal(mfa.fas[0].q_lambda.mean, fa.q_lambda.mean)
         # VbMfa S = 3
         np.random.seed(0)
-        mfa = vbmfa.VbMfa(Y, Q, 3)
+        mfa = vbmfa.mfa.VbMfa(Y, Q, 3)
         mfa.q_s.fill(0.0)
         mfa.q_s[0, :] = 1.0
         for i in range(it):
@@ -67,7 +68,7 @@ class TestPi(unittest.TestCase):
     def test_pi(self):
         np.random.seed(0)
         S = 10
-        q_pi = vbmfa.Pi(S)
+        q_pi = vbmfa.mfa.Pi(S)
         self.assertEqual(len(q_pi.alpha), S)
         self.assertGreater(len(str(q_pi)), 0)
 
@@ -77,7 +78,7 @@ class TestS(unittest.TestCase):
         np.random.seed(0)
         S = 10
         N = 100
-        q_s = vbmfa.S((S, N))
+        q_s = vbmfa.mfa.S((S, N))
         self.assertEqual(q_s.shape, (S, N))
         self.assertGreater(len(str(q_s)), 0)
 
