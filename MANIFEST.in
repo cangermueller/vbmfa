@@ -1,2 +1,3 @@
 include *.rst
+include LICENSE.txt
 recursive-include docs *.rst *.py *.tex
