@@ -8,7 +8,7 @@ import numpy as np
 from scipy.special import digamma
 import sklearn.cluster
 import numpy.testing as npt
-from vbmfa import vbfa
+from . import vbfa
 
 
 class VbMfa(object):

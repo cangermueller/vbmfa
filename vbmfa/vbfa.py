@@ -4,6 +4,7 @@ Implementation of a single factor analyser.
 Model parameters are inferred by variational Bayes.
 """
 
+
 import numpy as np
 from scipy.special import digamma
 
@@ -310,8 +311,8 @@ class Nu(object):
     q : int
         Rank (# columns) of factor matrix
 
-    Arguments
-    ---------
+    Attributes
+    ----------
     Q : int
         Rank (# columns) of factor matrix
     a : float
@@ -372,8 +373,8 @@ class Mu(object):
     p : int
         dimension of mu vector
 
-    Arguments
-    ---------
+    Attributes
+    ----------
     P : int
         dimension of mu vector
     mean : :py:class:`np.ndarray`
@@ -430,7 +431,7 @@ class Lambda(object):
     q : int
         # Columns of lambda matrix
 
-    Parameters
+    Attributes
     ----------
     P : int
         # Rows of lambda matrix
@@ -523,8 +524,8 @@ class X(object):
     n : int
         # Columns (# samples) of X matrix
 
-    Arguments
-    ---------
+    Attributes
+    ----------
     Q : int
         # Rows of X matrix
     N : int
