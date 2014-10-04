@@ -1,223 +1,38 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
-    Setup file for vbmfa.
 
-    This file was generated with PyScaffold 0.9, a tool that easily
-    puts up a scaffold for your new Python project. Learn more under:
-    https://github.com/blue-yonder/pyscaffold
-"""
-
-import os
-import sys
-import inspect
-from distutils.cmd import Command
-
-import versioneer
-import setuptools
-from setuptools.command.test import test as TestCommand
 from setuptools import setup
-
-__location__ = os.path.join(os.getcwd(), os.path.dirname(
-    inspect.getfile(inspect.currentframe())))
-
-# Change these settings according to your needs
-MAIN_PACKAGE = "vbmfa"
-DESCRIPTION = "Variational Bayesian Mixture of Factor Analysers"
-LICENSE = "GNU GPLv3+"
-URL = "https://github.com/cangermueller/vbmfa"
-AUTHOR = "Christof Angermueller"
-EMAIL = "cangermueller@gmail.com"
-
-COVERAGE_XML = False
-COVERAGE_HTML = False
-JUNIT_XML = False
-
-# Add here all kinds of additional classifiers as defined under
-# https://pypi.python.org/pypi?%3Aaction=list_classifiers
-CLASSIFIERS = ['Development Status :: 4 - Beta',
-               'Intended Audience :: Developers',
-               'Intended Audience :: Education',
-               'Intended Audience :: Science/Research',
-               'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
-               'Operating System :: MacOS',
-               'Operating System :: POSIX :: Linux',
-               'Programming Language :: Python :: 3.4',
-               'Topic :: Scientific/Engineering :: Artificial Intelligence',
-               'Topic :: Scientific/Engineering :: Bio-Informatics',
-               'Topic :: Scientific/Engineering :: Image Recognition',
-               'Topic :: Scientific/Engineering :: Information Analysis',
-               ]
-
-# Add here console scripts like ['hello_world = vbmfa.module:function']
-CONSOLE_SCRIPTS = []
-
-# Versioneer configuration
-versioneer.VCS = 'git'
-versioneer.versionfile_source = os.path.join(MAIN_PACKAGE, '_version.py')
-versioneer.versionfile_build = os.path.join(MAIN_PACKAGE, '_version.py')
-versioneer.tag_prefix = 'v'  # tags are like v1.2.0
-versioneer.parentdir_prefix = MAIN_PACKAGE + '-'
-
-
-class PyTest(TestCommand):
-    user_options = [("cov=", None, "Run coverage"),
-                    ("cov-xml=", None, "Generate junit xml report"),
-                    ("cov-html=", None, "Generate junit html report"),
-                    ("junitxml=", None, "Generate xml of test results")]
-
-    def initialize_options(self):
-        TestCommand.initialize_options(self)
-        self.cov = None
-        self.cov_xml = False
-        self.cov_html = False
-        self.junitxml = None
-
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-        if self.cov is not None:
-            self.cov = ["--cov", self.cov, "--cov-report", "term-missing"]
-            if self.cov_xml:
-                self.cov.extend(["--cov-report", "xml"])
-            if self.cov_html:
-                self.cov.extend(["--cov-report", "html"])
-        if self.junitxml is not None:
-            self.junitxml = ["--junitxml", self.junitxml]
-
-    def run_tests(self):
-        try:
-            import pytest
-        except:
-            raise RuntimeError("py.test is not installed, "
-                               "run: pip install pytest")
-        params = {"args": self.test_args}
-        if self.cov:
-            params["args"] += self.cov
-            params["plugins"] = ["cov"]
-        if self.junitxml:
-            params["args"] += self.junitxml
-        errno = pytest.main(**params)
-        sys.exit(errno)
-
-
-def sphinx_builder():
-    try:
-        from sphinx.setup_command import BuildDoc
-        from sphinx import apidoc
-    except ImportError:
-        class NoSphinx(Command):
-            user_options = []
-
-            def initialize_options(self):
-                raise RuntimeError("Sphinx documentation is not installed, "
-                                   "run: pip install sphinx")
-
-        return NoSphinx
-
-    class BuildSphinxDocs(BuildDoc):
-
-        def run(self):
-            if self.builder == "doctest":
-                import sphinx.ext.doctest as doctest
-                # Capture the DocTestBuilder class in order to return the total
-                # number of failures when exiting
-                ref = capture_objs(doctest.DocTestBuilder)
-                BuildDoc.run(self)
-                errno = ref[-1].total_failures
-                sys.exit(errno)
-            else:
-                BuildDoc.run(self)
-
-    return BuildSphinxDocs
-
-
-class ObjKeeper(type):
-    instances = {}
-
-    def __init__(cls, name, bases, dct):
-        cls.instances[cls] = []
-
-    def __call__(cls, *args, **kwargs):
-        cls.instances[cls].append(super(ObjKeeper, cls).__call__(*args,
-                                                                 **kwargs))
-        return cls.instances[cls][-1]
-
-
-def capture_objs(cls):
-    from six import add_metaclass
-    module = inspect.getmodule(cls)
-    name = cls.__name__
-    keeper_class = add_metaclass(ObjKeeper)(cls)
-    setattr(module, name, keeper_class)
-    cls = getattr(module, name)
-    return keeper_class.instances[cls]
-
-
-def get_install_requirements(path):
-    content = open(os.path.join(__location__, path)).read()
-    return [req for req in content.split("\\n") if req != '']
-
+import os
 
 def read(fname):
-    return open(os.path.join(__location__, fname)).read()
+    return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
+setup(name='vbmfa',
+      version='0.0.1',
+      description='Variational Bayesian Mixture of Factor Analysers',
+      long_description=read('README.rst'),
+      author='Christof Angermueller',
+      author_email='cangermueller@gmail.com',
+      license='GNU GPLv3+',
+      url='https://github.com/cangermueller/vbmfa',
+      packages=['vbmfa'],
+      install_requires=['numpy>=1.8.2',
+                        'scipy>=0.14.0',
+                        'scikit-learn>=0.15.1'],
+      classifiers=['Development Status :: 4 - Beta',
+                   'Intended Audience :: Developers',
+                   'Intended Audience :: Education',
+                   'Intended Audience :: Science/Research',
+                   'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
+                   'Operating System :: MacOS',
+                   'Operating System :: POSIX :: Linux',
+                   'Programming Language :: Python :: 2.7',
+                   'Programming Language :: Python :: 3.4',
+                   'Topic :: Scientific/Engineering :: Artificial Intelligence',
+                   'Topic :: Scientific/Engineering :: Bio-Informatics',
+                   'Topic :: Scientific/Engineering :: Image Recognition',
+                   'Topic :: Scientific/Engineering :: Information Analysis',
+                   ],
+      keywords=['Factor Analysis', 'PCA', 'Probabilistic PCA',
+                'Dimensionality Reduction', 'Clustering'],
+      )
 
-def setup_package():
-    # Assemble additional setup commands
-    cmdclass = versioneer.get_cmdclass()
-    cmdclass['docs'] = sphinx_builder()
-    cmdclass['doctest'] = sphinx_builder()
-    cmdclass['test'] = PyTest
-
-    # Some helper variables
-    version = versioneer.get_version()
-    docs_path = os.path.join(__location__, "docs")
-    docs_build_path = os.path.join(docs_path, "build")
-    docs_source_path = os.path.join(docs_path, "source")
-    install_reqs = get_install_requirements("requirements.txt")
-
-    command_options = {
-        'docs': {'project': ('setup.py', MAIN_PACKAGE),
-                 'version': ('setup.py', version.split('-', 1)[0]),
-                 'release': ('setup.py', version),
-                 'build_dir': ('setup.py', docs_build_path),
-                 'config_dir': ('setup.py', docs_source_path),
-                 'source_dir': ('setup.py', docs_source_path)},
-        'doctest': {'project': ('setup.py', MAIN_PACKAGE),
-                    'version': ('setup.py', version.split('-', 1)[0]),
-                    'release': ('setup.py', version),
-                    'build_dir': ('setup.py', docs_build_path),
-                    'config_dir': ('setup.py', docs_path),
-                    'source_dir': ('setup.py', docs_path),
-                    'builder': ('setup.py', 'doctest')},
-        'test': {'test_suite': ('setup.py', 'tests'),
-                 'cov': ('setup.py', 'vbmfa')}}
-    if JUNIT_XML:
-        command_options['test']['junitxml'] = ('setup.py', 'junit.xml')
-    if COVERAGE_XML:
-        command_options['test']['cov_xml'] = ('setup.py', True)
-    if COVERAGE_HTML:
-        command_options['test']['cov_html'] = ('setup.py', True)
-
-    setup(name=MAIN_PACKAGE,
-          version=version,
-          url=URL,
-          description=DESCRIPTION,
-          author=AUTHOR,
-          author_email=EMAIL,
-          license=LICENSE,
-          long_description=read('README.rst'),
-          classifiers=CLASSIFIERS,
-          keywords=['Factor Analysis', 'PCA', 'Probabilistic PCA',
-                    'Dimensionality Reduction', 'Clustering'],
-          test_suite='tests',
-          packages=setuptools.find_packages(exclude=['tests', 'tests.*']),
-          install_requires=install_reqs,
-          setup_requires=['six'],
-          cmdclass=cmdclass,
-          tests_require=['pytest-cov', 'pytest'],
-          command_options=command_options,
-          entry_points={'console_scripts': CONSOLE_SCRIPTS})
-
-if __name__ == "__main__":
-    setup_package()

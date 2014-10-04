@@ -3,10 +3,7 @@
 import unittest
 import numpy as np
 import numpy.testing as npt
-import os
-os.sys.path.insert(0, os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), '../vbmfa'))
-import vbfa
+import vbmfa.vbfa as vbfa
 
 
 def sample_cluster(P=10, Q=5, N=100, mu=0.0, sigma=1.0):
@@ -39,7 +36,7 @@ class TestVbFa(unittest.TestCase):
             # x
             mse = fa.mse()
             fa.update_x()
-            self.assertLess(fa.mse() - mse, tol + 1.5)    # TODO: depends on initialization
+            self.assertLess(fa.mse() - mse, tol + 1.5) # TODO: depends on initialization
             # mu
             mse = fa.mse()
             fa.update_mu()

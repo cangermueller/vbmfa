@@ -1,5 +1,2 @@
-include versioneer.py
-include *.txt
 include *.rst
-recursive-include vbmfa *.py *.c *.h *.pxd *.pyx
-recursive-include docs *.rst *.py
+recursive-include docs *.rst *.py *.tex

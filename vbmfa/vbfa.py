@@ -352,6 +352,13 @@ class Nu(object):
         return self.a / self.b
 
     def permute(self, order):
+        """Permute factors in the given order.
+
+        Parameters
+        ----------
+        order : :py:class:`numpy.ndarray`
+            Permutation order
+        """
         self.b = self.b[order]
 
 

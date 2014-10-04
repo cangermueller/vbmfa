@@ -7,8 +7,8 @@ Model parameters are inferred by variational Bayes.
 import numpy as np
 from scipy.special import digamma
 import sklearn.cluster
-import vbfa
 import numpy.testing as npt
+from vbmfa import vbfa
 
 
 class VbMfa(object):
