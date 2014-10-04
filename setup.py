@@ -18,7 +18,7 @@ setup(name='vbmfa',
       install_requires=['numpy>=1.8.2',
                         'scipy>=0.14.0',
                         'numpydoc>=0.5',
-                        'scikit-learn>=0.15.1']
+                        'scikit-learn>=0.15.1'],
       classifiers=['Development Status :: 4 - Beta',
                    'Intended Audience :: Developers',
                    'Intended Audience :: Education',
