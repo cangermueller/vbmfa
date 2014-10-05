@@ -2,9 +2,15 @@
 
 from setuptools import setup
 import os
+import sys
 
-def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+def read(fname, split=False):
+    with open(os.path.join(os.path.dirname(__file__), fname)) as f:
+        lines = f.read()
+    if split:
+        lines = lines.splitlines()
+    return lines
+
 
 setup(name='vbmfa',
       version='0.0.1',
@@ -15,10 +21,7 @@ setup(name='vbmfa',
       license='GNU GPLv3+',
       url='https://github.com/cangermueller/vbmfa',
       packages=['vbmfa'],
-      install_requires=['numpy>=1.8.2',
-                        'scipy>=0.14.0',
-                        'numpydoc>=0.5',
-                        'scikit-learn>=0.15.1'],
+      install_requires=read('requirements.txt', split=True),
       classifiers=['Development Status :: 4 - Beta',
                    'Intended Audience :: Developers',
                    'Intended Audience :: Education',
