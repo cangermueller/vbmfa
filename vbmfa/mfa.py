@@ -8,9 +8,9 @@ import numpy as np
 from scipy.special import digamma
 import sklearn.cluster
 import numpy.testing as npt
-import vbmfa.fa as vbmfa_fa
+# import vbmfa.fa as vbmfa_fa
 # Use the following line instead for sphinx
-# import fa as vbmfa_fa
+import fa as vbmfa_fa
 
 
 class VbMfa(object):
