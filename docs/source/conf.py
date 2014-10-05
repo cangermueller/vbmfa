@@ -16,8 +16,8 @@
 import sys
 import os
 
-os.command('pip install numpy')
-os.command('pip install scipy')
+os.system('pip install numpy')
+os.system('pip install scipy')
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
