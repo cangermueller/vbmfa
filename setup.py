@@ -18,7 +18,6 @@ def read(fname, split=False):
 def requirements(fname='requirements.txt'):
     return [str(r.req) for r in parse_requirements(abspath(fname))]
 
-
 setup(name='vbmfa',
       version='0.0.1',
       description='Variational Bayesian Mixture of Factor Analysers',
