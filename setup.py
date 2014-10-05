@@ -1,15 +1,22 @@
 #!/usr/bin/env python
 
 from setuptools import setup
+from pip.req import parse_requirements
 import os
-import sys
+
+
+def abspath(fname):
+    return os.path.join(os.path.dirname(__file__), fname)
 
 def read(fname, split=False):
-    with open(os.path.join(os.path.dirname(__file__), fname)) as f:
+    with open(abspath(fname)) as f:
         lines = f.read()
     if split:
         lines = lines.splitlines()
     return lines
+
+def requirements(fname='requirements.txt'):
+    return [str(r.req) for r in parse_requirements(abspath(fname))]
 
 
 setup(name='vbmfa',
@@ -21,7 +28,7 @@ setup(name='vbmfa',
       license='GNU GPLv3+',
       url='https://github.com/cangermueller/vbmfa',
       packages=['vbmfa'],
-      install_requires=read('requirements.txt', split=True),
+      install_requires=requirements(),
       classifiers=['Development Status :: 4 - Beta',
                    'Intended Audience :: Developers',
                    'Intended Audience :: Education',
