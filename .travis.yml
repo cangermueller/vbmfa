@@ -9,7 +9,7 @@ before_install:
   - sudo apt-get install gfortran libopenblas-dev liblapack-dev
 
 install:
-  - pip install -r requirements.txt
+  - pip install -q -r requirements.txt
 
 script:
   - py.test tests
